@@ -62,6 +62,8 @@
 					[[(+ (MOD elnum 0xFFFF) (+ slot llarrayStartOffset))]]value
 				}
 				{
+					;Sorry... I hate overwriting memory :-(
+					
 					[[(+ (MOD (DIV elnum (DIV 256 (llarrayGetESize base))) 0xFFFF) (+ slot llarrayStartOffset))]](+ (MUL (DIV @@(+ (MOD (DIV elnum (DIV 256 (llarrayGetESize base))) 0xFFFF) (+ slot llarrayStartOffset)) (EXP 2 (MUL (llarrayGetESize base) (+ (MOD elnum (DIV 256 (llarrayGetESize base))) 1)))) (EXP 2 (MUL (llarrayGetESize base) (+ (MOD elnum (DIV 256 (llarrayGetESize base))) 1)))) (+ (MOD @@(+ (MOD (DIV elnum (DIV 256 (llarrayGetESize base))) 0xFFFF) (+ slot llarrayStartOffset)) (EXP 2 (MUL (llarrayGetESize base) (MOD elnum (DIV 256 (llarrayGetESize base)))))) (MUL (MOD value (EXP 2 (llarrayGetESize base))) (EXP 2 (MUL (llarrayGetESize base) (MOD elnum (DIV 256 (llarrayGetESize base))))))))
 				}
 			)

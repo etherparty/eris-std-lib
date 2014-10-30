@@ -1,0 +1,56 @@
+;key-value type
+{
+	(include "stdvarspace.def")
+	(include "llkv.def")
+
+	;Definition of Linked list form
+	;@vari(name) : "linkedlist"
+
+	(def 'llbase (base) (+ base stdVSsize))
+
+	;Key Value entry
+	;Note: keys can only be 20 bytes maximum
+	;@(+ vari(name) (+ (* key (EXP 0x100 3)) (EXP 0x100 2)) : mainvalue
+	;+1 : Previous Entry
+	;+2 : Next Entry
+
+	;---------------------------------------------------------------------------------------------
+
+	(def 'IkvCTS (base key) (+ base (+ (EXP 0x100 2) (* (MOD key (EXP 0x100 20)) (EXP 0x100 3)))))
+
+	(def 'kvInit (base name addperm rmperm modperm)
+		{
+			[[base]]"keyvalue"
+			[[(IvnSlot base)]]name
+			[[(IvapSlot base)]]addperm
+			[[(IvrpSlot base)]]rmperm
+			[[(IvmpSlot base)]]modperm
+		}
+	)
+
+	(def 'IkvSet (slot value) (llkvSet slot 0 value))
+
+	(def 'IkvStore (slot mem membool)
+		{
+			(if membool
+				(IkvSet slot @mem)
+				(IkvSet slot (calldataload mem))
+			)
+		}
+	)
+	(def 'IkvGet (slot) (llkvGet slot 0))
+	(def 'IkvLoad (slot mem) (llkvLoad slot 0 mem))
+
+
+	;Externals
+	;-------------------------------------------------------------
+	(def 'llCTS (name key) (IllCTS (vari name) key))
+
+	(def 'llInit (name addperm rmperm modperm) (IllInit (vari name) name addperm rmperm modperm))
+
+	(def 'llGet (name key) (IllGet (llCTS name key)))
+	(def 'llLoad (name key mem) (IllLoad (llCTS name key) mem))
+
+	(def 'llSet (name key value) (IllSet (llCTS name key) value))
+	(def 'llStore (name key mem membool) (IllStore (llCTS name key) mem membool))
+}

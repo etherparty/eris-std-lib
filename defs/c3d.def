@@ -260,10 +260,9 @@
 		}
 	)
 
-	(def 'C3DInit (mem1 memlen1 membool1 key value mem2 memlen2 membool2)
+	(def 'C3DInit (mem1 memlen1 membool1)
 		{
 			(C3DStoreTop mem1 memlen1 membool1)
-			(when value (C3DAddLink key value mem2 memlen2 membool2))
 		}
 	)
 }

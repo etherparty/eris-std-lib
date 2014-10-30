@@ -11,9 +11,10 @@
 	(def 'IsingleVS (base) (+ base (+ stdVSsize 1)))
 	(def 'IsingleValue (base) @@(IsingleVS base))
 
-	(def 'IsingleInit (base addperm rmperm modperm value)
+	(def 'IsingleInit (base name addperm rmperm modperm value)
 		{
 			[[base]]"single"
+			[[(IvnSlot base)]]name
 			[[(IvapSlot base)]]addperm
 			[[(IvrpSlot base)]]rmperm
 			[[(IvmpSlot base)]]modperm
@@ -38,7 +39,7 @@
 	(def 'singleVS (name) (IsingleVS (vari name)))
 	(def 'singleValue (name) (IsingleValue (vari name)))
 
-	(def 'singleInit (name addperm rmperm modperm value) (IsingleInit (vari name) addperm rmperm modperm value))
+	(def 'singleInit (name addperm rmperm modperm value) (IsingleInit (vari name) name addperm rmperm modperm value))
 	(def 'singleLoad (name mem) (IsingleLoad (vari name) mem))
 	(def 'singleGet (name) (IsingleGet (vari name)))
 	(def 'singleSet (name value) (IsingleSet (vari name) value))
