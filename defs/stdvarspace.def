@@ -14,7 +14,7 @@
 	(def 'vari (vname)
 		{ 
 			[0x200]vname
-			(+ (* stdvaroffset (EXP 0x100 31)) (+ (* (/ (SHA3 0x200 0x20) (EXP 256 24)) (EXP 256 23) )))
+			(+ (* stdvaroffset (EXP 0x100 31)) (+ (* (MOD (SHA3 0x200 0x20) (EXP 256 8)) (EXP 256 23) )))
 		}
 	)
 	(def 'vartype (name) @@(vari name))
