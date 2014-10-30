@@ -27,29 +27,30 @@ func VariName(name string) []byte{
 
 // Single Type Variable.
 // (+ @@variname 1)
-func GetSingle(addr, name string, state *ethstate.State) []byte {
-    byteAddr := ethutil.Hex2Bytes(addr)
-    obj := state.GetStateObject(byteAddr)
+func GetSingle(addr []byte , name string, state *ethstate.State) []byte {
+    obj := state.GetStateObject(addr)
     base := VariName(name)
     base[31] = byte(StdVarSize+1)
     return (obj.GetStorage(ethutil.BigD(base))).Bytes()
 }
 
-func GetArrayElement(addr, name string, index int, state *ethstate.State) []byte{
+func GetArrayElement(addr []byte, name string, index int, state *ethstate.State) []byte{
     return GetKeyedArrayElement(addr, name, "0x0", index, state)
 }
 
-func GetArray(addr, name string, state *ethstate.State) [][]byte{
+func GetArray(addr []byte, name string, state *ethstate.State) [][]byte{
     return GetKeyedArray(addr, name, "0x0", state)
 }
 
-func GetKeyedArrayElement(addr, name, key string, index int, state *ethstate.State) []byte {
+func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethstate.State) []byte {
+    fmt.Println("keyed array!######", name, key, index)
     bigBase := big.NewInt(0)
     bigBase2 := big.NewInt(0)
 
-    byteAddr := ethutil.Hex2Bytes(addr)
-    obj := state.GetStateObject(byteAddr)
+    obj := state.GetStateObject(addr)
+    fmt.Println("obj:", obj)
     base := VariName(name)
+    fmt.Println("base", base)
 
     // how big are the elements stored in this array:
     sizeLocator := make([]byte, len(base))
@@ -57,16 +58,23 @@ func GetKeyedArrayElement(addr, name, key string, index int, state *ethstate.Sta
     sizeLocator = append(sizeLocator[:31], byte(StdVarSize+1))
     elementSizeBytes := (obj.GetStorage(ethutil.BigD(sizeLocator))).Bytes()
     elementSize := ethutil.BigD(elementSizeBytes).Uint64()
+    fmt.Println("el size", elementSize)
 
     // key should be trailing 20 bytes
+    if len(key) >= 2 && key[:2] == "0x"{
+        key = key[2:]
+    }
     if l := len(key); l > 20{
         key = key[l-20:]
     }
 
     // what slot does the array start at:
-    keyBytes := ethutil.UserHex2Bytes(key)
-    keyBytesShift := append(keyBytes, []byte{1,0,0}...)
+    keyBytes := ethutil.PackTxDataArgs2(key)
+    keyBytesShift := append(keyBytes[3:], []byte{1,0,0}...)
     slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
+
+    fmt.Println("keybytes", keyBytes, keyBytesShift)
+    fmt.Println("slot biug:", slotBig)
 
     //numElements := obj.GetStorage(slotBig)
 
@@ -74,6 +82,7 @@ func GetKeyedArrayElement(addr, name, key string, index int, state *ethstate.Sta
     entriesPerRow :=  int64(256 / elementSize)
     rowN := int64(index) / entriesPerRow
     colN := int64(index) % entriesPerRow
+    fmt.Println("row shit", entriesPerRow, rowN, colN)
 
     row := bigBase.Add(big.NewInt(1), bigBase.Add(slotBig, big.NewInt(rowN))).Bytes()
     rowStorage := (obj.GetStorage(ethutil.BigD(row))).Bytes()
@@ -85,21 +94,23 @@ func GetKeyedArrayElement(addr, name, key string, index int, state *ethstate.Sta
     // so divide it by 2^(colN*elSize) and take modulo 2^elsize 
     // divide row storage by 2^(colN*elSize)
     colBig := bigBase.Exp(big.NewInt(2), bigBase.Mul(elSizeBig, big.NewInt(colN)), nil)
+    fmt.Println("rowstor", rowStorage)
+    fmt.Println("colBig:", colBig)
     r := bigBase.Div(rowStorageBig, colBig)
     w := bigBase2.Exp(big.NewInt(2), elSizeBig, nil)
+    fmt.Println("r w", r, w)
     v := bigBase.Mod(r, w)
     return v.Bytes()
 }
 
-func GetKeyedArray(addr, name, key string, state *ethstate.State) [][]byte{
+func GetKeyedArray(addr []byte, name, key string, state *ethstate.State) [][]byte{
     return nil
 }
 
-func GetLinkedListElement(addr, name, key string, state *ethstate.State) []byte{
+func GetLinkedListElement(addr []byte, name, key string, state *ethstate.State) []byte{
     bigBase := big.NewInt(0)
 
-    byteAddr := ethutil.Hex2Bytes(addr)
-    obj := state.GetStateObject(byteAddr)
+    obj := state.GetStateObject(addr)
     base := VariName(name)
 
     // key should be trailing 20 bytes
