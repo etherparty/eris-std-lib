@@ -5,13 +5,13 @@
     (include "../defs/stdll.def")
 
     ; test single
-   ; (singleInit "mySingle" 0 0 0 0x543)
+   (singleInit "mySingle" 0 0 0 0x543)
     
-   ; ; test array
-   ; (arrayInit "myArray" 0 0 0 8 100 0 0)
-   ; (arraySetE "myArray" 2 0x23)
-   ; (arraySetE "myArray" 5 0x53)
-   ; (arraySetE "myArray" 6 0x63)
+   ; test array
+    (arrayInit "myArray" 0 0 0 8 100)
+    (arraySetE "myArray" 2 0x23)
+    (arraySetE "myArray" 5 0x53)
+    (arraySetE "myArray" 6 0x63)
 
     ; test linked list
     (llInit "myLL" 0 0 0)

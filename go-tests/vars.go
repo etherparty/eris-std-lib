@@ -10,11 +10,11 @@ import (
 )
 
 // each var comes with 3 permissions: add, rm, mod
-var StdVarSize = 3
+var StdVarSize = 4
 
 // location of a var is 1 followed by the first 8 bytes of its sha3
 func VariName(name string) []byte{
-    h := ethcrypto.Sha3Bin(ethutil.PackTxDataArgs(name))
+    h := ethcrypto.Sha3Bin(ethutil.PackTxDataArgs2(name))
     base := append([]byte{1}, h[:8]...)
     base = append(base, bytes.Repeat([]byte{0}, 32-len(base))...)
     return base
