@@ -101,15 +101,16 @@
 	;General structure
 
 	;Minimum Viable Doug Set Up
-	(nllInit "permnames" "none" "none" "none" "doug" 0)
-	(nllAddLink "permnames" "mine" 1)
-	(nllAddLink "permnames" "create" 2)
-	(nllAddLink "permnames" "transact" 3)
+	(llInit "permnames" "none" "none" "none" "doug" 0)
+	(llAddLink "permnames" "mine" 1)
+	(llAddLink "permnames" "create" 2)
+	(llAddLink "permnames" "transact" 3)
 
-	(karrayInit "perms" "none" "none" "none" 4 0 (CALLER) 0 1) ;Gives Caller all permissions
-	(karraySetE "perms" (CALLER) 1 1)
-	(karraySetE "perms" (CALLER) 2 1)
-	(karraySetE "perms" (CALLER) 3 1)
+	(arrayInit "perms" "none" "none" "none" 4 0) ;Gives Caller all permissions
+	(arraySetE "perms" (CALLER) 0 1)
+	(arraySetE "perms" (CALLER) 1 1)
+	(arraySetE "perms" (CALLER) 2 1)
+	(arraySetE "perms" (CALLER) 3 1)
 
 	(def 'BLcheck (addr) (= (karrayGetE "perms" addr 0) 1))
 
@@ -140,7 +141,7 @@
 	[0x3E0]1
 	(C3DInit 0x300 0 1 0 0 0 0 0)
 
-	(nllInit "DOUG" "none" "none" "none" "DOUG" (Address))
+	(llInit "DOUG" "none" "none" "none" "DOUG" (Address))
 
 	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1111 ;NEED TO REMOVE THIS
 
