@@ -1,0 +1,12 @@
+{
+
+    (include "../defs/single.def")
+    (include "../defs/stdarray.def")
+
+    (singleInit "mySingle" 0 0 0 0x543)
+    (arrayInit "myArray" 0 0 0 8 100 0 0)
+    (arraySetE "myArray" 2 0x23)
+    (arraySetE "myArray" 5 0x53)
+    (arraySetE "myArray" 6 0x63)
+
+}

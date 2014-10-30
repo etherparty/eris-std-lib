@@ -82,9 +82,13 @@
 
 
 	;Keyless arrays (use above but set key to 0x0 by default)
+    ; get from storage, load to stack
 	(def 'arrayGetE (name elnum) (IarrayGetE (vari name) 0x0 elnum))
+    ; get from storage, load to mem
 	(def 'arrayLoadE (name elnum mem) (IarrayLoadE (vari name) 0x0 elnum mem))
+    ; set a value
 	(def 'arraySetE (name elnum value) (IarraySetE (vari name) 0x0 elnum value))
+    ; store a value from memory or calldata
 	(def 'arrayStoreE (name elnum mem membool) (IarrayStoreE (vari name) 0x0 elnum mem membool))
 	(def 'arrayInit (name addperm rmperm modperm Esize Allsize elnum value) (IarrayInit (vari name) addperm rmperm modperm Esize Allsize 0x0 elnum value))
 
