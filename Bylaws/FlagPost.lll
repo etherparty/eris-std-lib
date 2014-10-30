@@ -1,0 +1,105 @@
+;Flagging
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+
+	[[reprep]]BLFlagpost
+
+	(def 'MODREP 0x1)
+	(def 'SPF 0x2)
+	(def 'FL 0x3)
+	(def 'THD 0x4)
+	(def 'repmul 0x5)
+
+	(def 'targetpost () (calldataload 0x0))
+
+	(return 0 (lll
+		{
+			;Update the names
+			[0x0]"checkname"
+			[0x20]"modrep"
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[MODREP]]@0x40
+
+			[0x0]"checkname"
+			[0x20]"flaggedlist"
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[FL]]@0x40
+
+			;Check if they have the required permission
+			[0x0]"get"
+			[0x20](caller)
+			[0x40]0
+			[0x60]0
+			[0x80]0
+			(call (gass) @@MODREP 0 0x0 0x40 0x40 0x60)
+			(unless (&& (>= @0x40 @@repreq) (<= @0x60 maxmodstrikes) (= @0x80 1)) (STOP))
+
+			[0x0]"getrepmul"
+			[0x20]0
+			(call (gass) DOUG 0 0x0 0x20 0x20 0x20)
+			[[repmul]]@0x20
+
+			;rep at stake for making a flag
+			[0x0]"set"
+			[0x20](caller)
+			(if (> (* @@repmul flagrepatstake) @0x40)
+				{
+					[0x40]0
+				}
+				{
+					[0x40](- @0x40 (* @@repmul flagrepatstake))
+				}
+			)
+			(call (gass) @@MODREP 0 0x0 0x60 0x0 0x0)
+
+			;Check that this is a valid post
+			[0x0]"checkname"
+			[0x20]"swarumpostfactory"
+			[0x40] 0
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[SPF]]@0x40
+
+			[0x0]"check"
+			[0x20](calldataload 0) ;Targetpost
+			[0x40]0
+			(call (gass) @@SPF 0 0x0 0x40 0x40 0x20)
+			(unless (= @0x40 1) (STOP))
+
+			;Check if its status is 0 so it is flagable
+			[0x0]"checkstatus"
+			[0x20]42 ;set to a non-zero value to avoid false positives
+			(call (gass) (targetpost) 0 0x0 0x20 0x20 0x20)
+			(unless (= @0x20 0) (stop))
+
+			;Add to flagged list
+
+			[0x0]"getparent"
+			[0x20]0
+			(call (gass) (targetpost) 0 0x0 0x20 0x20 0x20)
+			[[THD]]@0x20
+
+			[0x0]"getdata"
+			[0x20](targetpost)
+			[0x40]0
+			[0x60]0
+			[0x80]0
+			[0xA0]0
+			[0xC0]0
+			[0xE0]0
+			(call (gass) @@THD 0 0x0 0x40 0x60 0xA0)
+
+			[0x0]"addlink"
+			[0x20](targetpost)
+			[0x40](targetpost)
+			[0x100]0
+			(call (gass) @@FL 0 0x0 0x100 0x100 0x20)
+			(unless @0x100 (STOP)) ;Addlink must have been sucessful
+
+			[0x0]"changestatus"
+			[0x20]1
+			[0x40](caller)
+			(call (gass) (targetpost) 0 0x0 0x60 0x0 0x0)
+		}
+	0 ))
+}

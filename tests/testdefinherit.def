@@ -1,0 +1,11 @@
+{
+	(include "testdef.def")
+
+	(def 'testslot 0x5)
+
+	(def 'tdistore (value)
+		{
+			[[testslot]]value
+		}
+	)
+}

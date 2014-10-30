@@ -1,0 +1,5 @@
+#The EPM DEPLOYMENT
+deploy:
+	singletest.lll => {{single}}
+log:
+	single => {{single}}

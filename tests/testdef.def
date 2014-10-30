@@ -1,0 +1,9 @@
+{
+	(def 'testslot 0x1)
+
+	(def 'tdstore (value)
+		{
+			[[testslot]]value
+		}
+	)
+}

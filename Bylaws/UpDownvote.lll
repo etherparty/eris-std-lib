@@ -1,0 +1,144 @@
+;upvote/downvote
+
+;
+;upvote/downvote 0xtargetpost
+
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+
+	[[reprep]]BLUpdownvote
+
+	(def 'REP 0x1)
+	(def 'SPF 0x2)
+	(def 'repmul 0x3)
+
+	(def 'cmd () (calldataload 0x0))
+
+	(return 0 (lll
+		{
+			;Update the names
+			[0x0]"checkname"
+			[0x20]"rep"
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[REP]]@0x40
+
+			[0x0]"checkname"
+			[0x20]"swarumpostfactory"
+			[0x40] 0
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[SPF]]@0x40
+
+			;Get user info and check they have required rep and no more then 3 strikes
+			[0x0]"get"
+			[0x20](caller)
+			[0x40]0
+			[0x60]0
+			(call (gass) @@REP 0 0x0 0x40 0x40 0x60)
+			(unless (&& (>= @0x40 (repreq)) (<= @0x60 3) (= @0x80 1)) (STOP))
+
+			[0x0]"check"
+			[0x20](calldataload 0x20) ;Targetpost
+			[0x40]0
+			(call (gass) @@SPF 0 0x0 0x40 0x40 0x20)
+			(unless (= @0x40 1) (STOP))
+
+			[0x0]"getrepmul"
+			[0x20]0
+			(call (gass) DOUG 0 0x0 0x20 0x20 0x20)
+			[[repmul]]@0x20
+
+			(when (= (cmd) "upvote")
+				{
+					[0x0]"upvote"
+					[0x20](caller)
+					[0x40]0
+					(call (gass) (calldataload 0x20) 0 0x0 0x40 0x40 0x60)
+					;Return values:
+					;0x40:
+					;0 have not voted
+					;1 you have already upvoted
+					;2 you have downvoted
+					;0x60: Post current rating
+					;0x80: Author's address
+
+					(when (&& (= @0x40 0) (< @0x60 maxupvote))
+						{
+							;Addrep no need to cancel previous
+							[0x0]"get"
+							[0x20]@0x80
+							[0x40]0
+							(call (gass) @@REP 0 0x0 0x40 0x40 0x20)
+
+							[0x0]"set"
+							[0x20]@0x80
+							[0x40](+ @0x40 (* @@repmul (upvoterew)))
+							(call (gass) @@REP 0 0x0 0x40 0x0 0x0)
+						}
+					)
+					(when (&& (= @0x40 2) (< @0x60 maxupvote))
+						{
+							;Addrep undo previous downvote
+							[0x0]"get"
+							[0x20]@0x80
+							[0x40]0
+							(call (gass) @@REP 0 0x0 0x40 0x40 0x20)
+
+							[0x0]"set"
+							[0x20]@0x80
+							[0x40](+ @0x40 (* @@repmul (+ (downvotepun) (upvoterew))))
+							(call (gass) @@REP 0 0x0 0x40 0x0 0x0)
+						}
+					)
+				}
+			)
+
+
+			(when (= (cmd) "downvote")
+				{
+					[0x0]"downvote"
+					[0x20](caller)
+					[0x40]0
+					(call (gass) (calldataload 0x20) 0 0x0 0x40 0x40 0x60)
+					;Return values:
+					;0x40:
+					;0 have not voted
+					;1 you have already upvoted
+					;2 you have downvoted
+					;0x60: Post current rating
+					;0x80: Author's address
+
+
+					(when (&& (= @0x40 0) (> @0x60 (NEG maxdownvote)))
+						{
+							;downrep no need to cancel previous
+							[0x0]"get"
+							[0x20]@0x80
+							[0x40]0
+							(call (gass) @@REP 0 0x0 0x40 0x40 0x20)
+
+							[0x0]"set"
+							[0x20]@0x80
+							[0x40](- @0x40 (* @@repmul (downvotepun)))
+							(call (gass) @@REP 0 0x0 0x40 0x0 0x0)
+						}
+					)
+					(when (&& (= @0x40 1) (> @0x60 (NEG maxdownvote)))
+						{
+							;Addrep undo previous downvote
+							[0x0]"get"
+							[0x20]@0x80
+							[0x40]0
+							(call (gass) @@REP 0 0x0 0x40 0x40 0x20)
+
+							[0x0]"set"
+							[0x20]@0x80
+							[0x40](- @0x40 (* @@repmul (+ (downvotepun) (upvoterew))))
+							(call (gass) @@REP 0 0x0 0x40 0x0 0x0)
+						}
+					)
+				}
+			)
+		}
+	0 ))
+}

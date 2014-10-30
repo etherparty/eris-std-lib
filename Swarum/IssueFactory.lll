@@ -1,0 +1,172 @@
+; Name: c3D Forum Post Contract
+; Author: Dennis McKinnon <dennis@projectdouglas.org>
+; Copyright: 2014 Project Douglas
+; License: see => https://github.com/project-douglas/c3D-contracts/blob/master/LICENSE.md
+;
+; Structure Overview: https://github.com/project-douglas/c3D-contracts/blob/master/docs/Structure.md
+; API Overview: https://github.com/project-douglas/c3D-contracts/blob/master/docs/API.md
+
+;THIS CODE IS NON-FUNCTIONAL.... yet
+;
+;Factory template
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+;--------------------------------------------------------------
+
+	(def 'scoreU 0x19)
+	(def 'scoreD 0x20)
+	(def 'status 0x21)
+	(def 'statchanger 0x22)
+	(def 'FirstIndicate 0x23)
+	;Status values
+	;0 no status
+	;1 flagged
+	;2 promoted for deletion
+	;3 blacklisted
+	;4 cleared. Unflagable
+
+	(def 'cmd () (calldataload 0x0))
+	;(Link to parent)
+	(def 'parentlink () (calldataload 0x20))
+	;(Change Status)
+	(def 'newstatus () (calldataload 0x20))
+	(def 'changer () (calldataload 0x40))
+	;(Up/downvote)
+	(def 'voter () (calldataload 0x20))
+	;(Init)
+	(def 'contentblob () (calldataload 0x20))
+	(def 'initmodel () (calldataload 0x40))
+	(def 'initUI () (calldataload 0x60))
+	(def 'initowner () (calldataload 0x80))
+	(def 'initfirstind () (calldataload 0xA0))
+	;changebehaviour
+	(def 'newbehaviour () (calldataload 0x20))
+;---------------------------------------------------------------
+	(initsafemem)
+
+	(return 0 (lll {
+
+		(when (= (calldataload 0x0) "create")
+			{
+				(unless (CHECKBYLAW) (STOP))
+
+				;Create the code
+				[0x0](create 0 0 (lll {
+
+					(initsafemem)
+
+				  	[[ABcreator]](CALLER)
+				  	[[ABtime]](NUMBER)
+				  	[[ABbehaviour]]1
+
+					(return 0 (lll {
+						(when (&& (= (cmd) "init") (= @@ABindicator 0))
+							{
+								[[ABindicator]]0x88554646AB ;Attached Content indicator
+								[[ABdmpointer]](initmodel)
+								[[ABUIpointer]](initUI)
+								[[ABblob]](contentblob)
+								[[ABowner]](initowner)
+								[[FirstIndicate]](initfirstind)
+								(STOP)
+							}
+						)
+
+						(when (= (cmd) "changebehaviour")
+							{
+								(unless (CHECKBYLAW) (STOP))
+								[[ABbehaviour]](newbehaviour)
+								(when (= (newbehaviour) 5)
+									{
+										;Been blacklisted obscure the btih
+										[[ABblob]](Mod @@ABblob (EXP 16 36))
+									}
+								)
+								(STOP)
+							}
+						)
+
+						(when (= (cmd) "upvote")
+							{
+								(unless (CHECKBYLAW) (STOP)) ;If not a bylaw stop
+								[0x0] @@(voter)
+								(when (= @0x0 0)
+									{
+										;When this person hasn't voted before
+										[[scoreU]](+ @@scoreU 1)
+										[[(voter)]]1
+									}
+								)
+
+								(when (= @0x0 2)
+									{
+										;When this person has downvoted before
+										[[scoreU]](+ @@scoreU 1)
+										[[scoreD]](- @@scoreD 1)
+										[[(voter)]]1
+									}
+								)
+
+								[0x20](- @@scoreU @@scoreD)
+								[0x40]@@author
+								(return 0x0 0x60)
+							}
+						)
+
+						(when (= (cmd) "downvote")
+							{
+								(unless (CHECKBYLAW) (STOP)) ;If not a bylaw stop
+								[0x0] @@(voter)
+								(when (= @0x0 0)
+									{
+										;When this person hasn't voted before
+										[[scoreD]](+ @@scoreD 1)
+										[[(voter)]]2
+
+										[0x0]"endorse"
+										[]
+									}
+								)
+
+								(when (= @0x0 1)
+									{
+										;When this person has upvoted before
+										[[scoreU]](- @@scoreU 1)
+										[[scoreD]](+ @@scoreD 1)
+										[[(voter)]]2
+									}
+								)
+
+								[0x20](- @@scoreU @@scoreD)
+								[0x40]@@author
+								(return 0x0 0x60)
+							}
+						)
+
+
+				  	} 0))
+
+				} 0))
+
+				[[@0x0]]1 ;note that this contract was made here
+
+				[0x20]"init"
+				[0x40](calldataload 0x20)
+				[0x60](initmodel)
+				[0x80](initUI)
+				[0xA0](initowner)
+				(call (gass) @0x0 0 0x20 0xA0 0x0 0x0)
+
+				(return 0x0 0x20)
+			}
+		)
+		(when (= (calldataload 0x0) "check")
+			{
+				[0x0]@@(calldataload 0x20)
+				(return 0x0 0x20)
+			}
+		)
+
+	} 0))
+}

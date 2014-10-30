@@ -1,0 +1,71 @@
+;Percy Version 1
+;---------------
+;Written by Dennis McKinnon
+;
+;Purpose: Percy Contracts act as a proxy for a user. This allows for a better defined and more flexible interaction with whatever DAPP you have on chain.
+;For all intents and purposes Percy contract addresses should be treated as the user address. This means using (CALLSTACK 1) instead of (ORIGIN) when authenticating users.
+;Percy contracts have the benefit that In cases where there is an IT department, A backdoor can be set for access resets.
+
+;HELPFUL NOTES
+cmd 		Inputs 					Returns					Description
+---------------------------------------------------------------------------------------------
+OWNER CMDs
+"fwd"		targetaddr, [DATA]		32 bytes from call 		This command forward [DATA] to the target contract. It returns whatever gets passed back to it
+
+ADMIN CMDs
+"chgowner"	newaddr					nil						This command changes the address associated with the owner of this percy
+
+MISC CMDs
+NONE YET
+
+{
+	(def 'gass () (- (GAS) 100))
+
+	(def 'backdoor 0x1)
+	(def 'owner 0x2)
+
+	(def 'cmd () (calldataload 0x0))
+	;API
+	;OWNER COMMANDS
+	;fwd
+	(def 'target () (calldataload 0x20))
+
+	;ADMIN COMMANDS
+	;chgowner
+	(def 'newaddr () (calldataload 0x20))
+
+
+	;init
+	[[backdoor]](CALLER) ;This is the creator of this contract (this can be changed)
+	[[owner]] ##USERADDRESS
+
+	(return 0 (lll{
+		;Body
+		(if (= (CALLER) @@owner) 
+			{
+				;This is the part for user commands
+				(if (= (cmd) "fwd")
+					{
+						(CALLDATACOPY 0x0 0x40 (CALLDATASIZE)) ;Copy all the data into memory
+						(call (gass) (target) 0 0x0 (- (CALLDATASIZE) 0x40) 0x0 0x20)
+						(return 0x0 0x20)
+					}
+				)
+			}
+		)
+		(if (= (CALLER) @@backdoor)
+			{
+				;This is for IT/admininstration use
+				(if (= (cmd) "chowner")
+					{
+						[[owner]](newaddr)
+					}
+				)
+			}
+		)
+
+		;Place miscellaneous command processing here (If there are things like fetch variables etc)
+		
+
+	} 0))
+}

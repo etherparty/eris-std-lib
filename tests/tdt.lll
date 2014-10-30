@@ -1,0 +1,5 @@
+{
+	(include "testdef.def")
+
+	(tdstore 0xDEADBEEF)
+}

@@ -1,0 +1,194 @@
+; Name: c3D Forum Structural Contract
+; Author: Dennis McKinnon <dennis@projectdouglas.org>
+; Copyright: 2014 Project Douglas
+; License: see => https://github.com/project-douglas/c3D-contracts/blob/master/LICENSE.md
+;
+; Structure Overview: https://github.com/project-douglas/c3D-contracts/blob/master/docs/Structure.md
+; API Overview: https://github.com/project-douglas/c3D-contracts/blob/master/docs/API.md
+
+;Note: This contract should only be used for testing purposes
+
+;Factory template
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+
+	;API definitions
+	;(ADD)
+	(def 'cmd () (calldataload 0x0))
+	(def 'linkID () (calldataload 0x20))
+	(def 'main () (calldataload 0x40))
+	(def 'type () (calldataload 0x60))
+	(def 'behaviour () (calldataload 0x80))
+	(def 'data () (calldataload 0xA0))
+	(def 'model () (calldataload 0xC0))
+	(def 'UI () (calldataload 0xE0))
+	;(Init)
+	(def 'contentblob () (calldataload 0x20))
+	(def 'initmodel () (calldataload 0x40))
+	(def 'initUI () (calldataload 0x60))
+	(def 'initowner () (calldataload 0x80))
+	;(Bind)
+	(def 'parentaddr () (calldataload 0x20))
+	;getdata
+	(def 'targetlink () (calldataload 0x20)) ;OPTIONAL!!!
+
+
+	(initsafemem)
+
+	(return 0 (lll {
+
+		(when (= (cmd) "create")
+			{
+				(unless (CHECKBYLAW) (STOP))
+
+				;Create the code
+				[0x0](create 0 0 (lll {
+
+					;General structure
+					(def 'headslot BALLstart)
+					(def 'tailslot 0x20)
+
+					(initsafemem)
+
+					[[BAcreator]](CALLER) ;Creator of the contract (only they can initialize)
+					[[BAtime]](NUMBER) ;block when this list was created
+
+					[[tailslot]] 0x30 ;Tail
+					[[headslot]] 0x30 ;Head
+					[[BAbehaviour]]1
+
+					[[0x30]] 0xDEADBEEF ;Filler NEVER EVER EVER! (I mean it) delete this entry
+
+					(return 0 (lll {
+						;Body
+						(when (&& (= (cmd) "init") (= @@BAindicator 0)) ;Creator is initializing an uninitialized Structural contract
+							{
+								[[BAindicator]]0x88554646BA ;Structural
+								[[BAblob]](contentblob)
+								[[BAdmpointer]](initmodel)
+								[[BAUIpointer]](initUI)
+								[[BAowner]](initowner)
+								(STOP)
+							}
+						)
+
+						(when (= (cmd) "setparent")
+							{
+								;
+								(unless (CHECKBYLAW) (STOP))
+								[[BAparent]](parentaddr)
+								(STOP)
+							}
+						)
+
+						(when (= (cmd) "getdata")
+							{
+								(if (targetlink)
+									{
+										;If a target link is provided then returns link info
+										[0x0]@@(typeslot (targetlink))
+										[0x20]@@(behaviourslot (targetlink))
+										[0x40]@@(dataslot (targetlink))
+										[0x60]@@(modelslot (targetlink))
+										[0x80]@@(UIslot (targetlink))
+										(return 0x0 0xA0)
+									}
+									{
+										;Otherwise returns base information
+										[0x0]@@BAblob
+										[0x20]@@BAdmpointer
+										[0x40]@@BAUIpointer
+										[0x60]@@BAowner
+										[0x80]@@BAparent
+										(return 0x0 0xA0)
+									}
+								)
+							}
+						)
+						
+
+						(when (= (cmd) "addlink")
+							{
+								;Checks
+								(unless (&& (= @@(linkID) 0) (= @@(+ (linkID) 1) 0) (= @@(+ (linkID) 2) 0) (= @@(- (linkID) 1) 0) (= @@(- (linkID) 2) 0)) (STOP))
+								(unless (&& (= @@(+ (linkID) 3) 0) (= @@(+ (linkID) 4) 0) (= @@(+ (linkID) 5) 0) (= @@(+ (linkID) 6) 0) (= @@(+ (linkID) 7) 0) (= @@(+ (linkID) 8) 0)) (STOP))
+								(unless (&& (> (linkID) 0x40) (< (linkID) (NEG 0x10))) (STOP))
+
+								(unless (CHECKBYLAW) (STOP)) ;only bylaws can call
+
+								;Add link
+								[[(linkID)]](main)
+								[[(prevslot (linkID))]]@@headslot
+								[[(nextslot @@headslot)]](linkID)
+								[[headslot]](linkID)
+
+								;Data Attached
+								[[(typeslot (linkID))]](type)
+								[[(behaviourslot (linkID))]](behaviour)
+								[[(dataslot (linkID))]](data)
+								[[(modelslot (linkID))]](model)
+								[[(UIslot (linkID))]](UI)
+								[[(timeslot (linkID))]](NUMBER)
+
+								[0x0]1
+								(return 0x0 0x20)
+							}
+						)
+
+						(when (= (cmd) "rmlink")
+							{
+								;checks
+								(unless (&& (> (linkID) 0x40) (< (linkID) (NEG 0x10))) (STOP)) ;TOO LOW or TOO HIGH
+								(unless (= (linkID) (nextlink (prevlink (linkID)))) (STOP)) ;Must line up with a link
+
+								(unless (CHECKBYLAW) (STOP)) ;Only Bylaws can call
+
+								(when (= (linkID) @@headslot)
+									{
+										[[headslot]](prevlink (linkID)) ;Set the head to the second last
+									}
+								)
+
+								;Removal of link
+								[[(linkID)]]0
+								[[(nextslot (prevlink (linkID)))]](nextlink (linkID))
+								[[(prevslot (nextlink (linkID)))]](prevlink (linkID))
+								[[(nextslot (linkID))]]0
+								[[(prevslot (linkID))]]0
+
+								;Data Attached
+								[[(typeslot (linkID))]]0
+								[[(dataslot (linkID))]]0
+								[[(modelslot (linkID))]]0
+								[[(UIslot (linkID))]]0
+								[[(timeslot (linkID))]]0
+
+								(STOP)
+							}
+						)
+					} 0))
+				} 0))
+
+				[[@0x0]]1 ;note that this contract was made here
+
+				[0x20]"init"
+				[0x40](contentblob)
+				[0x60](initmodel)
+				[0x80](initUI)
+				[0xA0](initowner)
+				(call (gass) @0x0 0 0x20 0xA0 0x0 0x0)
+
+				(return 0x0 0x20)
+			}
+		)
+		(when (= (cmd) "check")
+			{
+				[0x0]@@(calldataload 0x20)
+				(return 0x0 0x20)
+			}
+		)
+
+	} 0))
+}
+

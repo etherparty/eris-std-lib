@@ -1,0 +1,310 @@
+;Doug-v7
+;NOW WITH ACTIVE PERMISSIONS!
+;
+;Default Behaviour: Bylaw status is required to edit the DOUG table
+
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUGDATAMODEL 0x0) ;Fill these in if you want
+	(def 'DOUGUIPOINTER 0x0)
+	(def 'DOUGBLOB 0x0)
+
+	;General structure
+	(def 'headslot BALLstart) ;This will keep LLstart at newest element
+	(def 'tailslot 0x20)
+	(def 'countslot 0x22)
+	(def 'prowslot 0x23)
+	(def 'pbitslot 0x24)
+	(def 'backdoor 0x25)
+	(def 'unlocktime 0x26)
+	(def 'repmul 0x27)
+
+	;Global Variables
+	(def 'GFzeros 0x1000000)
+	(def 'offset 0x100000)
+
+	(def 'BLcheck (addr) (= (MOD @@addr 8) 1))
+
+	;(Register)
+	(def 'cmd () (calldataload 0x0))
+	(def 'name () (calldataload 0x20))
+	(def 'target () (calldataload 0x40))
+	(def 'type () (calldataload 0x60))
+	(def 'behaviour () (calldataload 0x80))
+	(def 'data () (calldataload 0xA0))
+	(def 'model () (calldataload 0xC0))
+	(def 'UI () (calldataload 0xE0))
+
+	;Permission
+	(def 'permname () (+ (calldataload 0x20) offset))
+	(def 'permnum () (calldataload 0x60))
+
+	;Active Permissions
+	(def 'level () (calldataload 0x20))
+	(def 'APtarget () (calldataload 0x20))
+	;(def 'target (calldataload 0x40)) ;vote factory
+
+	;INITIALIZATION
+	[[BAindicator]]0x88554646BA
+	[[BAdmpointer]] DOUGDATAMODEL
+	[[BAUIpointer]] DOUGUIPOINTER
+	[[BAblob]] DOUGBLOB
+	[[BAparent]] 0x0 ;DOUG IS SUPREME
+	[[BAowner]]"The People"
+	[[BAcreator]]"Dennis Mckinnon" ; These feilds have no purpose in DOUG
+	[[BAtime]](NUMBER)
+	[[BAbehaviour]]1
+
+	[[countslot]] 0  			; Number of registered names
+
+	[[pbitslot]] 3 	;Next free bit location
+	[[prowslot]] 0 	;Permission row
+
+	;Name Linked list
+	[[tailslot]] 0x30 ;Tail
+	[[headslot]] 0x30 ;Head
+
+	[[0x30]] 0xDEADBEEF ;Filler NEVER EVER EVER! (I mean it) delete this entry
+	;Previous for this element is 0
+
+;	NAME REGISTRATION
+;	[0x0]"Doug - Revolution"
+;	(call (- (GAS) 100) namereg 0 0x0 0x11 0 0) ;Register the name DOUG
+
+	[[(+ "doug" offset)]]0 ;DOUG permissions located at 0th root start position 0
+	[[(CALLER)]]1 ;Give (CALLER) full DOUG permissions to start
+
+	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1 ;NEED TO REMOVE THIS
+
+	[[backdoor]](CALLER)
+
+	(return 0 (lll {
+
+	;DOUG Functions
+	;=================================================================================
+
+		(when (= (cmd) "checkname")
+			{
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;name must be of good form
+				[0x0]@@(name) ;Get address associated with "name"
+				(return 0x0 0x20) ; Return the Address
+			}
+		)
+
+		(when (= (cmd) "register")
+			{
+
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (&& (> (name) 0x20) (> (target) 0x20) (= (MOD (name) GFzeros) 0)) (STOP)); Prevent out of bounds registrations
+
+
+				(when (= @@(name) 0) ;name does not exist yet
+					{
+						;Perform appending to list
+						[[(prevslot (name))]] @@headslot 	;Set previous to value in head
+						[[(nextslot @@headslot)]] (name) 	;Set head's next to current name
+						[[headslot]](name) 			;Set Head to current name
+						[[countslot]](+ @@countslot 1) 	;Increment names counter
+					}
+				)
+				[[(name)]] (target) ;Store target at name
+
+				;Data Attached
+				[[(typeslot (name))]](type)
+				[[(behaviourslot (name))]](behaviour)
+				[[(dataslot (name))]](data)
+				[[(modelslot (name))]](model)
+				[[(UIslot (name))]](UI)
+				[[(timeslot (name))]](NUMBER)
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+
+	;Permissions Functions
+	;=========================================================================================
+
+		(when (= (cmd) "checkperm")
+			{
+				;Check what permission target has. If Target not provided defaults to CALLER
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Permission name should be of good form (use permname after this name is raw supplied name)
+				(unless (|| @@(permname) (= (name) "doug")) (STOP)) ;Stop if permission does not exist
+
+				[0x0](MOD @@(permname) 256)		;Get start position (first 8 bits)
+				[0x20](DIV @@(permname) 256)	;Get Row permission located on. (whatever is left)
+
+				[0x0](MOD (DIV @@(+ (target) @0x20) (EXP 2 @0x0)) 8) 	;This is The permission value
+				(return 0x0 0x20) ;Return requested value
+			}
+		)
+
+		(when (= (cmd) "setperm")
+			{
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Permission name must be of good form
+
+				;Set Permission. If Target not provided defaults to CALLER
+				[0x0](MOD @@(permname) 256)	;Get start position
+				[0x20](DIV @@(permname) 256)	;Get Row permission located on.
+				[0x40](MOD (permnum) 8)	;Get The permission number to set
+
+				[0x60](MOD (DIV @@(+ (target) @0x20) (EXP 2 @0x0)) 8) 	;This is The current permission value
+				[0x60](- @@(+ (target) @0x20) (* (EXP 2 @0x0) @0x60))	;Subtract out all permissions at this slot
+				[0x60](+ @0x60 (* (EXP 2 @0x0) @0x40))					;Add in the new permissions at this slot
+				[[(+ (target) @0x20)]]@0x60								;Set
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "addperm")
+			{
+
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (&& (> (name) 0x20) (= (MOD (name) GFzeros) 0)) (STOP)) ;name in range and name of "good form"
+
+				(when (|| @@(permname) (= (name) "doug")) (STOP)) ;Can't add a permission which already exists
+
+				[[(permname)]] (+ (* @@prowslot 256) @@pbitslot) ;Encode where this permission lies in bitstrings
+				[[pbitslot]] (+ @@pbitslot 3) ;increment start postion
+				(when (> @@pbitslot 252)
+					{
+						[[pbitslot]]0 ;New slot
+						[[prowslot]](+ @@prowslot 1) ;Increment row
+					}
+				)
+			}
+		)
+
+	;Active Permission Functions
+	;=========================================================================================
+
+		;For Registering a vote contract for a particular permission level
+		(when (= (cmd) "APregister")
+			{
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (< (level) 0x500) (STOP))
+				[[(+ (level) (* 2 offset))]](target)
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "APrequest")
+			{
+				;Here target is the address which wants permissions
+				(unless (< (level) 0x500) (STOP))	
+				(unless (target)(STOP))
+				[0x0]@@(+ (level) (* 2 offset))
+				(unless @0x0 (STOP)) ;Has to be a level that exists
+
+				[0x20](target)
+				(call (gass) @0x0 0 0x20 0x20 0x40 0x20)
+				(unless @0x40 (STOP)) ;must return non-zero voting contract address
+				[0x20]@0x40
+				[@0x40](+ (* @0x40 GFzeros) (* 3 offset))
+				[[@0x40]](level) ;Set the vote to 0x1000 + 0xlevel to indicate that it has permission to bestow up to that level action permission
+				[[(+ @0x40 1)]](+ (NUMBER) votelength)
+
+				(return 0x20 0x20) ;Return the vote address
+			}
+		)
+
+		(when (= (cmd) "APset")
+			{
+				[0x0](+ (* (CALLER) GFzeros) (* 3 offset))
+				(unless @@ @0x0 (STOP))
+				(unless (<= @@(+ (CALLER) 1) (NUMBER)) (STOP)) ;vote passed in time
+				[0x20]@@ @0x0
+				(unless (< @0x20 0x500) (STOP))
+
+				[[@0x0]]0
+				[[(+ @0x0 1)]]0 ;clean up
+
+				[0x40](+ (* (APtarget) GFzeros) (* 4 offset))
+				[[@0x40]]@0x20
+				[[(+ @0x40 1)]](+ (NUMBER) permlength) ;Set expiration time
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "APcheck")
+			{
+				[0x0](+ (* (APtarget) (* 4 offset)))
+				(if (< (NUMBER) @@(+ @0x0 1))
+					{
+						[0x0]@@ @0x0
+						(return 0x0 0x20)
+					}
+					{
+						[[@0x0]]0
+						[[(+ @0x0 1)]]0
+						[0x0]0
+						(return 0x0 0x20)
+					}
+				)
+			}
+		)
+
+		(when (= (cmd) "APfind")
+			{
+				[0x0]@@(+ (level) (* 2 offset))
+				(return 0x0 0x20)
+			}
+		)
+
+		;FIRESTORM AND COMMUNITY OVERRIDE
+		(when (&& (= (cmd) "FIRESTORM") (= (CALLER) @@backdoor))
+			{
+				(when (= (calldataload 0x20) "RESET")
+					{
+						[[timelock]]0
+					}
+				)
+				(unless @@timelock [[timelock]](+ (* 2 votelength) (NUMBER)))
+				(if (>= (NUMBER) @@timelock)
+					{
+						[0x0]@@tailslot
+						[0x20]"FIRESTORM"
+						(while (NOT (= @0x0 @@headslot))
+							{
+								[0x0](nextlink @0x0)
+								(call (gass) @0x0 0 0x20 0x20 0x0 0x0)
+
+							}
+						)
+						(suicide (caller))
+					}
+					{
+						(STOP)
+					}
+				)
+			}
+		)
+
+		(when (= (cmd) "WATERBUCKET")
+			{
+				;Community override requires BTM consensus
+				(unless (= @@(+ (* caller GFzeros) (* 4 offset)) BTM) (STOP))
+				[[backdoor]]0
+				[[timelock]]0
+			}
+		)
+
+		(when (= (cmd) "getrepmul")
+			{
+				[0x0]@@repmul
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "setrepmul")
+			{
+				(unless (BLcheck (CALLER)) (STOP))
+				[[repmul]](calldataload 0x20)
+			}
+		)
+	} 0))
+}
+

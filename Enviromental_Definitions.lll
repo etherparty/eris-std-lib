@@ -1,0 +1,170 @@
+;Definitions
+{
+	;Constants
+	;Upvote/Downvote
+	(def 'upvoterew 5)
+	(def 'downvotepun 5)
+
+	;These need to be balanced so that if
+	;the flagger and the promoter were the same
+	;performing both flag and promote ends up at
+	;a net loss
+	;promrew>promrepatstake>flagrew>flagrepatstake
+	(def 'flagrepatstake 4)
+	(def 'flagrew 14)
+	(def 'promrepatstake 20)
+	(def 'promrew 30)
+
+	(def 'maxupvote 50)
+	(def 'maxdownvote 25)
+
+	(def 'minpunish 300) ;Minimum punishment for being blacklisted
+
+	;max number of strikes tolerated
+	(def 'maxstrikes 3)
+	(def 'maxmodstrikes 20)
+	(def 'BLrepfrac 3)
+	;BL Rep required
+	(def 'BLUpdownvote 0)
+
+	(def 'BLCThreadrep 0)
+	(def 'BLP2Threadrep 0)
+	(def 'BLCTopicrep 27000)
+
+	(def 'BLFlagpost 0)
+	(def 'BLPrompost 2250)
+	(def 'BLBlacklist 9000)
+
+	(def 'BLMovethread 27000)
+
+	(def 'citizen 9000)
+
+	;Active Permissions settings
+	(def 'votelength 14400)
+	(def 'permlength 14400)
+
+	;Various Important APs
+	(def 'BTM 0x300)
+	(def 'DSM 0x350)
+	(def 'DSA 0x250)
+	(def 'XORD 0x200)
+	(def 'ORD 0x100)
+
+	(def 'ORDCON (total) 
+		(/ (* (/ (* total 1) 2) 1) 2) ;50 of 50 
+	)
+
+	(def 'XORDCON (total) 
+		(/ (* (/ (* total 1) 2) 3) 4) ;50 of 50 
+	)
+
+	(def 'BTMCON (total) 
+		(/ (* (/ (* total 3) 4) 9) 10) ;50 of 50 
+	)
+
+
+	(def 'repreq 0xF)
+;C3D - BA compatibility
+	(def 'BAindicator 0x10)
+	(def 'BAdmpointer 0x11)
+	(def 'BAUIpointer 0x12)
+	(def 'BAblob 0x13)
+	(def 'BAparent 0x14)
+	(def 'BAowner 0x15)
+	(def 'BAcreator 0x16)
+	(def 'BAtime 0x17)
+	(def 'BAbehaviour 0x18)
+	(def 'BALLstart 0x19)
+
+;C3D BA - Linked list structure definitions
+	(def 'nextslot (addr) (+ addr 2))
+	(def 'nextlink (addr) @@(+ addr 2))
+	(def 'prevslot (addr) (+ addr 1))
+	(def 'prevlink (addr) @@(+ addr 1))
+
+	(def 'typeslot (addr) (+ addr 3))
+	(def 'behaviourslot (addr) (+ addr 4))
+	(def 'dataslot (addr) (+ addr 5))
+	(def 'modelslot (addr) (+ addr 6))
+	(def 'UIslot (addr) (+ addr 7))
+	(def 'timeslot (addr) (+ addr 8))
+
+;C3D - AB compatibility
+	(def 'ABindicator 0x10)
+	(def 'ABdmpointer 0x11)
+	(def 'ABUIpointer 0x12)
+	(def 'ABblob 0x13)
+	(def 'ABparent 0x14)
+	(def 'ABowner 0x15)
+	(def 'ABcreator 0x16)
+	(def 'ABtime 0x17)
+	(def 'ABbehaviour 0x18)
+
+;--------------------------------------------
+;Helpful "Functions"
+	(def 'NEG (value) (- 0 value))
+	(def 'safeslot () @@(NEG 1))
+	(def 'safepoint () (NEG 1))
+	(def 'stack () (NEG 2))
+	(def 'gass () (- (GAS) 100))
+	(def 'initsafemem () [[(safepoint)]](NEG 3))
+
+	(def 'CHECKBYLAW () (seq
+		(unless @@safepoint (initsafemem)) ;if safemem not initialized... do it
+		[[(safeslot)]]@0x0
+		[[(- (safeslot) 1)]]@0x20
+		[[(- (safeslot) 2)]]@0x40
+		[0x0]"checkperm"
+		[0x20] "doug"
+		[0x40](caller)
+		(call (gass) DOUG 0 0x0 0x60 0x0 0x20)
+		[[(stack)]](= @0x0 1)
+		[0x40]@@(- (safeslot) 2)
+		[0x20]@@(- (safeslot) 1)
+		[0x0]@@(safeslot)
+		@@(stack)
+	))
+
+	(def 'CHECKCITIZEN (seq
+		(unless @@safepoint (initsafemem)) ;if safemem not initialized... do it
+		[[(safeslot)]]@0x0
+		[[(- (safeslot) 1)]]@0x20
+		[[(- (safeslot) 2)]]@0x40
+		[[(- (safeslot) 3)]]@0x60
+		[[(- (safeslot) 4)]]@0x80
+		[[(- (safeslot) 5)]]@0xA0
+
+		;Check they are "full citizen"
+		[0x0]"checkname"
+		[0x20]"rep"
+		(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+		[[REP]]@0x40
+
+		[0x0]"checkname"
+		[0x20]"modrep"
+		(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+		[[MODREP]]@0x40
+
+		[0x0]"get"
+		[0x20](ORIGIN)
+		[0x40]0
+		[0x60]0
+		(call (gass) @@REP 0 0x0 0x40 0x40 0x40)
+
+		[0x80]0
+		[0xA0]0
+		(call (gass) @@MODREP 0 0x0 0x40 0x80 0x40)
+		[[(stack)]]0
+		(when (&& (|| (>= @0x40 citizen) (>= @0x80 citizen))
+					(<= @0x60 maxstrikes) (<= @0xA0 maxstrikes)) [[(stack)]]1)
+
+		[0xA0]@@(- (safeslot) 5)
+		[0x80]@@(- (safeslot) 4)
+		[0x60]@@(- (safeslot) 3)
+		[0x40]@@(- (safeslot) 2)
+		[0x20]@@(- (safeslot) 1)
+		[0x0]@@(safeslot)
+		@@(stack)
+	))
+
+}

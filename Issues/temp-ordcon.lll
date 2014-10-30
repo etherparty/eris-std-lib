@@ -1,0 +1,110 @@
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+	;init
+	(def 'YAY 0x1)
+	(def 'NAY 0x2)
+	(def 'REP 0x3)
+	(def 'MODREP 0x4)
+	(def 'subject 0x5)
+
+	(def 'total 0x9)
+	(def 'MinYAY 0xA)
+	(def 'MinNAY 0xB)
+
+	(return 0 (lll{
+		(when (&& (= (cmd) "init") (= @@subject 0))
+			{
+				[[subject]](calldataload 0x20)
+			}
+		)
+		;Body
+		(when (= (cmd) "vote")
+			{
+				;Check they are "full citizen"
+				(unless (CHECKCITIZEN) (STOP))
+
+				[0x0]"checkname"
+				[0x20]"activeaccounts"
+				(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+
+				[0x0]"activate"
+				[0x20]0
+				(call (gass) @0x40 0 0 0 0x20 0x40)
+
+				(when (> @0x20 @@total)
+					{
+						[[total]]@0x20
+						[[MinYAY]](ORDCON @0x20) ;How many yes votes are needed 
+						[[MinNAY]](- @0x20 @@MinYAY)
+					}
+				)
+
+				;Vote managment
+				(when (= (vote) 0) ;Unvote
+					{
+						(when (= @@(CALLER) 1) 
+							{
+								[[NAY]](- @@NAY 1)
+								[[CALLER]]0
+							}
+						)
+						(when (= @@(CALLER) 2)  ;Already voted yes unvote
+							{
+								[[YAY]](- @@YAY 1)
+								[[CALLER]]0
+							}
+						)
+					}
+				)
+
+				(when (= (vote) 1)
+					{
+						(when (= @@(CALLER) 0) 
+							{
+								[[NAY]](+ @@NAY 1))
+								[[(CALLER)]]1
+							}
+						)
+						(when (= @@(CALLER) 2))
+							{
+								[[NAY]](+ @@NAY 1)
+								[[YAY]](- @@YAY 1)
+								[[(CALLER)]]1
+							}
+						)
+					}
+				)
+
+				(when (= (vote) 2)
+					{
+						(when (= @@(CALLER) 0) 
+							{
+								[[YAY]](+ @@YAY 1))
+								[[(CALLER)]]2
+							}
+						)
+						
+						(when (= @@(CALLER) 1))
+							{
+								[[NAY]](- @@NAY 1)
+								[[YAY]](+ @@YAY 1)
+								[[(CALLER)]]2
+							}
+						)
+					}
+				)
+				
+				;Check if End conditions are met
+				(when (>= @@YAY @@MinYAY)
+					{
+						[0x0]"APset"
+						[0x20]@@subject
+						(call (gass) DOUG 0 0x0 0x20 0 0)
+					}
+				)
+			}
+		)
+
+	} 0))
+}

@@ -1,0 +1,171 @@
+;Doug-v6
+;
+;Default Behaviour: Bylaw status is required to edit the DOUG table
+
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUGDATAMODEL 0x0) ;Fill these in if you want
+	(def 'DOUGUIPOINTER 0x0)
+	(def 'DOUGBLOB 0x0)
+
+	;General structure
+	(def 'headslot BALLstart) ;This will keep LLstart at newest element
+	(def 'tailslot 0x20)
+	(def 'countslot 0x22)
+	(def 'prowslot 0x23)
+	(def 'pbitslot 0x24)
+
+	;Global Variables
+	(def 'GFzeros 0x1000000)
+	(def 'offset 0x100000)
+
+	(def 'BLcheck (addr) (= (MOD @@addr 8) 1))
+
+	;(Register)
+	(def 'cmd () (calldataload 0x0))
+	(def 'name () (calldataload 0x20))
+	(def 'target () (calldataload 0x40))
+	(def 'type () (calldataload 0x60))
+	(def 'behaviour () (calldataload 0x80))
+	(def 'data () (calldataload 0xA0))
+	(def 'model () (calldataload 0xC0))
+	(def 'UI () (calldataload 0xE0))
+
+	;Permission
+	(def 'permname () (+ (calldataload 0x20) offset))
+	(def 'permnum () (calldataload 0x60))
+
+	;INITIALIZATION
+	[[BAindicator]]0x88554646BA
+	[[BAdmpointer]] DOUGDATAMODEL
+	[[BAUIpointer]] DOUGUIPOINTER
+	[[BAblob]] DOUGBLOB
+	[[BAparent]] 0x0 ;DOUG IS SUPREME
+	[[BAowner]]"The People"
+	[[BAcreator]]"Dennis Mckinnon" ; These feilds have no purpose in DOUG
+	[[BAtime]](NUMBER)
+	[[BAbehaviour]]1
+
+	[[countslot]] 0  			; Number of registered names
+
+	[[pbitslot]] 3 	;Next free bit location
+	[[prowslot]] 0 	;Permission row
+
+	;Name Linked list
+	[[tailslot]] 0x30 ;Tail
+	[[headslot]] 0x30 ;Head
+
+	[[0x30]] 0xDEADBEEF ;Filler NEVER EVER EVER! (I mean it) delete this entry
+	;Previous for this element is 0
+
+;	NAME REGISTRATION
+;	[0x0]"Doug - Revolution"
+;	(call (- (GAS) 100) namereg 0 0x0 0x11 0 0) ;Register the name DOUG
+
+	[[(+ "doug" offset)]]0 ;DOUG permissions located at 0th root start position 0
+	[[(CALLER)]]1 ;Give (CALLER) full DOUG permissions to start
+
+	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1 ;NEED TO REMOVE THIS
+
+	(return 0 (lll {
+
+	;DOUG Functions
+	;=================================================================================
+
+		(when (= (cmd) "checkname")
+			{
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;name must be of good form
+				[0x0]@@(name) ;Get address associated with "name"
+				(return 0x0 0x20) ; Return the Address
+			}
+		)
+
+		(when (= (cmd) "register")
+			{
+
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (&& (> (name) 0x20) (> (target) 0x20) (= (MOD (name) GFzeros) 0)) (STOP)); Prevent out of bounds registrations
+
+
+				(when (= @@(name) 0) ;name does not exist yet
+					{
+						;Perform appending to list
+						[[(prevslot (name))]] @@headslot 	;Set previous to value in head
+						[[(nextslot @@headslot)]] (name) 	;Set head's next to current name
+						[[headslot]](name) 			;Set Head to current name
+						[[countslot]](+ @@countslot 1) 	;Increment names counter
+					}
+				)
+				[[(name)]] (target) ;Store target at name
+
+				;Data Attached
+				[[(typeslot (name))]](type)
+				[[(behaviourslot (name))]](behaviour)
+				[[(dataslot (name))]](data)
+				[[(modelslot (name))]](model)
+				[[(UIslot (name))]](UI)
+				[[(timeslot (name))]](NUMBER)
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+
+	;Permissions Functions
+	;=========================================================================================
+
+		(when (= (cmd) "checkperm")
+			{
+				;Check what permission target has. If Target not provided defaults to CALLER
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Permission name should be of good form (use permname after this name is raw supplied name)
+				(unless (|| @@(permname) (= (name) "doug")) (STOP)) ;Stop if permission does not exist
+
+				[0x0](MOD @@(permname) 256)		;Get start position (first 8 bits)
+				[0x20](DIV @@(permname) 256)	;Get Row permission located on. (whatever is left)
+
+				[0x0](MOD (DIV @@(+ (target) @0x20) (EXP 2 @0x0)) 8) 	;This is The permission value
+				(return 0x0 0x20) ;Return requested value
+			}
+		)
+
+		(when (= (cmd) "setperm")
+			{
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Permission name must be of good form
+
+				;Set Permission. If Target not provided defaults to CALLER
+				[0x0](MOD @@(permname) 256)	;Get start position
+				[0x20](DIV @@(permname) 256)	;Get Row permission located on.
+				[0x40](MOD (permnum) 8)	;Get The permission number to set
+
+				[0x60](MOD (DIV @@(+ (target) @0x20) (EXP 2 @0x0)) 8) 	;This is The current permission value
+				[0x60](- @@(+ (target) @0x20) (* (EXP 2 @0x0) @0x60))	;Subtract out all permissions at this slot
+				[0x60](+ @0x60 (* (EXP 2 @0x0) @0x40))					;Add in the new permissions at this slot
+				[[(+ (target) @0x20)]]@0x60								;Set
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "addperm")
+			{
+
+				(unless (BLcheck (CALLER)) (STOP))
+				(unless (&& (> (name) 0x20) (= (MOD (name) GFzeros) 0)) (STOP)) ;name in range and name of "good form"
+
+				(when (|| @@(permname) (= (name) "doug")) (STOP)) ;Can't add a permission which already exists
+
+				[[(permname)]] (+ (* @@prowslot 256) @@pbitslot) ;Encode where this permission lies in bitstrings
+				[[pbitslot]] (+ @@pbitslot 3) ;increment start postion
+				(when (> @@pbitslot 252)
+					{
+						[[pbitslot]]0 ;New slot
+						[[prowslot]](+ @@prowslot 1) ;Increment row
+					}
+				)
+			}
+		)
+	} 0))
+}
+

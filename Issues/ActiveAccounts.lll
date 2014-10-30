@@ -1,0 +1,67 @@
+{
+	(def 'twomonths 86400)
+
+	(def 'marker 0x1)
+	(def 'Acount 0x2)
+	(def 'target () @0x60)
+
+	;init
+	[[tailslot]] 0x30 ;Tail
+	[[headslot]] 0x30 ;Head
+	[[marker]]0x30
+
+	[[0x30]] 0xDEADBEEF
+
+	(return 0 (lll{
+
+		(when (= (cmd) "activate")
+			{
+				;Perform citizen check
+				;Check they are "full citizen"
+				(unless (CHECKCITIZEN) (STOP))
+
+				;First step update the count by subtracting people since last marker
+				[0x0]@@marker
+				[0x20]0
+				[0x40](- (NUMBER) twomonths)
+				(while (&& (< @@ @0x0 @0x40) (! (= @0x0 @@headslot)))
+					{
+						[0x20](+ @0x20 1)
+						[0x0](nextlink @0x0)
+					}
+				)
+				[[marker]]@0x0
+
+				(when (> (- (NUMBER) @@(target)) twomonths) [0x20](- @0x20 1) )
+
+				[[Acount]](- @@Acount @0x20)
+
+				;If they are not already the head move them there
+				(if (= (target) @@headslot)
+					{
+						[[(target)]](NUMBER)
+					}
+					{
+						;link either side then move
+
+						[[(target)]](NUMBER)
+						[[(nextslot (prevlink (target)))]](nextlink (target))
+						[[(prevslot (nextlink (target)))]](prevlink (target))
+						[[(nextslot @@headslot)]](target)
+						[[headslot]](target)
+					}
+				)
+				[0x0]@@Acount
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "getcount")
+			{
+				[0x0]@@Acount
+				(return 0x0 0x20)
+			}
+		)
+
+	} 0))
+}

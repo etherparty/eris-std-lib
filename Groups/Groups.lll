@@ -1,0 +1,116 @@
+#Basic Groups
+
+{
+	
+	(def 'growslot 0x23)
+	(def 'gbitslot 0x24)
+
+	(def 'colavd 0x100)
+	(def 'GFzeros 0x1000000)
+
+	(def 'cmd () (calldataload 0x0))
+	(def 'name () (calldataload 0x20))
+	(def 'target () (calldataload 0x40))
+	(def 'value () (calldataload 0x60))
+
+	(def 'user () (calldataload 0x20))
+
+	(def 'ADMINcheck (addr) (= (MOD @@(* addr colavd) 2) 1))
+
+	;init
+	[[0x9]]colavd
+	[[0x8]GFzeros
+
+	[[gbitslot]] 0 ;Next free bit location
+	[[growslot]] 0 	;group row
+
+	[["admin"]]0 ;Set the admin group locator
+
+	[[(CALLER)]]1 ; Give Caller acces to admin group
+
+	(return 0 (lll{
+		;Body
+		
+
+		(when (= (cmd) "getgroup") ;Return binary value of inclusion in named group
+			{
+				;If no target supplied return the locator information
+
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Group name should be of good form )
+				(unless (|| @@(name) (= (name) "admin")) (STOP)) ;Stop if group does not exist
+
+				[0x0](MOD @@(name) 256)		;Get group bit
+				[0x20](MOD (DIV @@(name) 256) colavd)	;Get group row
+
+				(if (= (target) 0)
+					{
+						(return 0x0 0x40) ;Return locator information
+					}
+					{
+						[0x0](MOD (DIV @@(+ (* (target) colavd) @0x20) (EXP 2 @0x0)) 2) 	;This is The group value
+						(return 0x0 0x20) ;Return requested value
+					}
+				)
+
+			}
+		)
+
+		(when (= (cmd) "getgroups") ;Return all group strings associated with a user
+			{
+				[0x20]0x60
+				[0x40]@@growslot
+				(for [0x0]0 (<= @0x0 @@growslot) [0x0](+ @0x0 1)
+					{
+						[@0x20]@@(+ (* (user) colavd) @0x0)
+						[0x20](+ @0x20 0x20) 
+					}
+				)
+				(return 0x40 (- @0x20 0x40))
+			}
+		)
+
+		(when (= (cmd) "settogroup")
+			{
+				(unless (ADMINcheck (CALLER)) (STOP))
+				(unless (= (MOD (name) GFzeros) 0) (STOP)) ;Permission name must be of good form
+				(unless (|| @@(name) (= (name) "admin")) (STOP)) ;Stop if permission does not exist
+
+				;Set group membership
+				[0x0](MOD @@(name) 256)	;Get start position
+				[0x20](MOD (DIV @@(name) 256) colavd)	;Get Row permission located on.
+				[0x40](MOD (value) 2)	;Get The inclusion number to set
+
+				[0x60](MOD (DIV @@(+ (target) @0x20) (EXP 2 @0x0)) 2) 	;This is The current group value
+				[0x60](- @@(+ (* (target) colavd) @0x20) (* (EXP 2 @0x0) @0x60))	;Subtract out group at this slot
+				[0x60](+ @0x60 (* (EXP 2 @0x0) @0x40))					;Add in the new group at this slot
+				[[(+ (* (target) colavd) @0x20)]]@0x60					;Set
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "mkgroup")
+			{
+
+				(unless (ADMINcheck (CALLER)) (STOP))
+				(unless (&& (> (name) 0x20) (= (MOD (name) GFzeros) 0)) (STOP)) ;name in range and name of "good form"
+
+				(when (|| @@(name) (= (name) "admin")) (STOP)) ;Can't add a group which already exists
+
+				[[(name)]] (+ (* @@growslot 256) @@gbitslot) ;Encode where this permission lies in bitstrings
+				[[gbitslot]] (+ @@gbitslot 4) ;increment start postion
+				(when (> @@gbitslot 252)
+					{
+						[[gbitslot]]0 ;New slot
+						[[growslot]](+ @@growslot 1) ;Increment row
+					}
+				)
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+	} 0))
+}

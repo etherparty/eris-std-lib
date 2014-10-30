@@ -1,0 +1,14 @@
+{
+	(def 'cmd () (calldataload 0x0))
+
+	[[0x0]]0xDEAFBEEF
+	(return 0 (lll{
+		;Body
+		(when (= (cmd) "store")
+			{
+				[[0x1]](calldataload 0x20)
+			}
+		)
+	} 0))
+	
+}

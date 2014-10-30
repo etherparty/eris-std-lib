@@ -1,0 +1,34 @@
+;Factory template
+{
+
+	(return 0 (lll {
+
+		(when (= (calldataload 0x0) "create")
+			{
+
+				;Create the code
+				[0x0](create 0 0 (lll {
+
+					;init
+					(return 0 (lll{
+						
+						;PUT CODE HERE
+
+					} 0))
+
+				} 0))
+
+				[[@0x0]]1 ;note that this contract was made here
+
+				(return 0x0 0x20) ;Return address
+			}
+		)
+		(when (= (calldataload 0x0) "check")
+			{
+				[0x0]@@(calldataload 0x20)
+				(return 0x0 0x20)
+			}
+		)
+
+	} 0))
+}

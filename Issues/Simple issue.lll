@@ -1,0 +1,46 @@
+{
+	;init
+	[[0x0]] 0xAddressforaddtodoug
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;Change this accodingly
+	(def 'BLWADD2DOUG 0xputsomethinghere) ;CHANGE THIS TO POINT TO THE "ADD TO DOUG" Bylaw
+	(def 'BTM 0x300)
+	(def 'gass () (-(GAS) 100))
+
+	(def 'ABindicator 0x10)
+	(def 'ABdmpointer 0x11)
+	(def 'ABUIpointer 0x12)
+	(def 'ABblob 0x13)
+	(def 'ABparent 0x14)
+	(def 'ABowner 0x15)
+	(def 'ABcreator 0x16)
+	(def 'ABtime 0x17)
+	(def 'ABbehaviour 0x18)
+
+	[0x0]"APrequest"
+	[0x20]BTM
+	(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+	[[0x1]]@0x40
+
+	[[ABindicator]]0x88554646AB
+	[[ABdmpointer]] ;INSERT THIS
+	[[ABUIpointer]] ;DITTO
+	[[ABblob]] ;SAME HERE
+	[[ABowner]](CALLER)
+	[[ABtime]](NUMBER)
+	[[ABbehaviour]]1
+
+	(return 0 (lll{
+		;Body
+		(unless (= (caller) @@ABowner) (STOP))
+
+		[0x0]"somename"
+		[0x20]@@0x0
+		[0x40]0
+		[0x60]1
+		(call (gass) BLWADD2DOUG 0 0x0 0x80 0x40 0x20)
+
+		(unless @0x40 (STOP)) ;if unsuccessful stop otherwise
+		(suicide (CALLER)) ;SUICIDE
+
+	} 0))
+}

@@ -1,0 +1,84 @@
+;Action Permissions
+{
+	;General structure
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+
+	;API definitions
+	(def 'cmd (calldataload 0x0))
+	;(register/request)
+	(def 'level (calldataload 0x40))
+	(def 'target (calldataload 0x20)) ;vote factory
+
+
+	(return 0 (lll {
+		;Body
+
+		;The usage of this is:
+		;-1)Register all the votefactories for various temp permissions
+		;1)Issue requests the required active permission
+		;2)You get the vote passed vote -> vote sets active permission
+		;3)You are then able to run the Issue.
+
+		(when (= (cmd) "set")
+			{
+				(unless (|| (CHECKBYLAW) (= (DIV @@(CALLER) 0x1000) 1))
+				(unless (<= @@(+ (CALLER) 1) (NUMBER)))
+				[0x0](MOD @@(CALLER) 0x1000)
+				(unless (&& (< 0x0 0x400) (> @0x0 0x100)) (STOP))
+
+				[[(CALLER)]]0
+				[[(+ (CALLER) 1)]]0 ;clean up
+
+				[[(target)]]@0x0
+				[[(+ (target) 1)]](+ (NUMBER) permlength) ;Set expiration time
+				(STOP)
+			}
+		)
+
+		;For Registering a vote contract for a particular permission level
+		(when (= (cmd) "register")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				(unless (&& (< (level) 0x400) (> (level) 0x100)) (STOP))	
+				(unless (> (target) 0x1400) (STOP))
+				[[(level)]](target)
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "request")
+			{
+				(unless (< (level) 0x400) (STOP))	
+				(unless (> (target) 0x1400) (STOP))
+				(unless @@(level) (STOP)) ;Has to be a level that exists
+
+				[0x0](target)
+				(call (- (GAS) 100) @@(level) 0 0x0 0x20 0x20 0x20)
+				(unless @0x20 (STOP))
+
+				[[@0x20]](+ (level) 0x1000) ;Set the vote to 0x1000 + 0xlevel to indicate that it has permission to bestow up to that level action permission
+				[[(+ @0x20 1)]](+ (NUMBER) votelength)
+
+				(return 0x20 0x20) ;Return the vote address
+			}
+		)
+
+		(when (= (cmd) "check")
+			{
+				(if (< (NUMBER) @@(+ (target) 1))
+					{
+						[0x0]@@(target)
+						(return 0x0 0x20)
+					}
+					{
+						[[(target)]]0
+						[[(+ (target) 1)]]0
+						[0x0]0
+						(return 0x0 0x20)
+					}
+				)
+			}
+		)
+	} 0))
+}

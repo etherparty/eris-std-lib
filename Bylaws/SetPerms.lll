@@ -1,0 +1,38 @@
+;ADD to DOUG
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b)
+
+	(def 'name () (calldataload 0x0))
+	(def 'value () (calldataload 0x20))
+
+	(return 0 (lll 
+		{
+			[0x0]"APcheck"
+			[0x20](caller)
+			(call (gass) DOUG 0 0x0 0x40 0x60 0x20)
+
+			(if (= (name) "doug")
+				{
+					(unless (= @0x60 BTM) (STOP))
+				}
+				{
+					[0x0]"checkperm"
+					[0x20](name)
+					(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+					(if @0x40
+						(unless (= @0x60 BTM) (STOP))
+						(unless (|| (= @0x60 BTM) (= @0x60 XORD) (= @0x60 ORD)) (STOP))
+					)
+				}
+			)
+
+			(unless (|| (= @0x40 BTM) (= @0x40 XORD)) (STOP))
+
+			[0x0]"setperm"
+			[0x20](name)
+			[0x40](value)
+			(call (gass) DOUG 0 0x0 0x60 0x0 0x0)
+		}
+	0 ))
+}

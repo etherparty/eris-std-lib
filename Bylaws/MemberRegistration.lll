@@ -1,0 +1,45 @@
+;ADD to DOUG
+{
+	(include "../Enviromental_Definitions.lll")
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b)
+
+	(def 'target () (calldataload 0x0))
+	(def 'REP 0x1)
+	(def 'MODREP 0x2)
+
+	(return 0 (lll
+		{
+			[0x0]"checkname"
+			[0x20]"modrep"
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[MODREP]]@0x40
+
+			[0x0]"checkname"
+			[0x20]"rep"
+			(call (gass) DOUG 0 0x0 0x40 0x40 0x20)
+			[[REP]]@0x40
+
+			[0x0]"makemem"
+			[0x20](caller)
+			(call (gass) @@REP 0 0x0 0x40 0x0 0x0)
+
+			[0x0]"makemem"
+			[0x20](caller)
+			(call (gass) @@MODREP 0 0x0 0x40 0x0 0x0)
+
+			;Get user info and check they have not already registered
+			[0x0]"get"
+			[0x20](caller)
+			[0x40]0
+			(call (gass) @@REP 0 0x0 0x40 0x40 0x40)
+			(unless (= @0x40 0x0) (STOP))
+
+			[0x0]"set"
+			[0x20](caller)
+			[0x40](* 2 BLCTopicrep)
+			(call (gass) @@REP 0 0x0 0x60 0x0 0x0)
+
+			(call (gass) (CALLER) 1000ether 0 0 0 0)
+		}
+	0 ))
+}

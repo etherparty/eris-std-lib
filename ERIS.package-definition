@@ -1,0 +1,295 @@
+# Package Name:       SWARUM
+# Package Author:     Dennis McKinnon
+# Package Email:      dennis@projectdouglas.org
+# Package Repository: https://github.com/project-douglas/swarum
+
+# Precursor, set some variables.
+#set:
+#  {{swarum_blob_id}} => 0xb5e0478618d5e91682efc0e2a95b3d32cdae546c03f6014dc8df659c2f0f94c3
+
+# First We Deploy DOUG and the RepDB
+modify-deploy:
+  General/DOUG-v7.lll => {{DOUG}}
+#  (def 'DOUGDATAMODEL 0x0) =>
+#  (def 'DOUGUIPOINTER 0x0) =>
+modify-deploy:
+  General/repDB.lll => {{rep}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  General/repDB.lll => {{modrep}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+
+# Then We deploy the Swarum Tops
+modify-deploy:
+  Swarum/Swarum-top.lll => {{Swarum}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Swarum/Swarum-top.lll => {{Blacklist}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+  [[BAbehaviour]]1 => [[BAbehaviour]]5
+modify-deploy:
+  Swarum/Swarum-top.lll => {{flaggedlist}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Swarum/Swarum-top.lll => {{promotedList}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Swarum/Swarum-top.lll => {{flashnoticeList}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+
+# Then we Deploy the Factories
+modify-deploy:
+  Swarum/Topic Factory.lll => {{Topicf}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Swarum/Thread Factory.lll => {{Threadf}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Swarum/Votable Post Factory.lll => {{Postf}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+
+# Finally we deploy the APIs || Bylaws
+modify-deploy:
+  Bylaws/CreateTopic.lll => {{BLWCTopic}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/CreateThread.lll => {{BLWCThread}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/PostToThread.lll => {{BLWPostTT}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/MoveThread.lll => {{BLWMoveThread}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/UpDownvote.lll => {{BLWVoteUpDown}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/BlacklistPost.lll => {{BLWBlacklist}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/FlagPost.lll => {{BLWFlagPost}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/PromotePost.lll => {{BLWPromotePost}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/RemovePromoted.lll => {{BLWRemovePromoted}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/RemoveFlag.lll => {{BLWRemoveFlag}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/AddAP.lll => {{BLWAddAP}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/AddBylaw.lll => {{BLWAddBylaw}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/AddPerm.lll => {{BLWAddPerm}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/AddToDoug.lll => {{BLWAddToDoug}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/DecentralizedBanhammer.lll => {{BLWDBH}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/MemberRegistration.lll => {{BLWReg}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/RemovePerms.lll => {{BLWRemovePerms}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+modify-deploy:
+  Bylaws/SetPerms.lll => {{BLWSetPerms}}
+  (def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) => (def 'DOUG {{DOUG}})
+
+# Endow Member Registration
+endow:
+  {{BLWReg}} => 100000000000000000000000000
+
+# Now. We must register Everything
+transact:
+  {{DOUG}} => register rep {{rep}}
+transact:
+  {{DOUG}} => register modrep {{modrep}}
+transact:
+  {{DOUG}} => register swarum {{Swarum}} '' 0x1
+transact:
+  {{DOUG}} => register flaggedlist {{flaggedlist}} '' 0x1
+transact:
+  {{DOUG}} => register promotedlist {{promotedList}} '' 0x1
+transact:
+  {{DOUG}} => register blacklist {{Blacklist}} '' 0x5
+transact:
+  {{DOUG}} => register flashnoticelist {{flashnoticeList}} '' 0x1
+transact:
+  {{DOUG}} => register swarumtopicfactory {{Topicf}}
+transact:
+  {{DOUG}} => register swarumthreadfactory {{Threadf}}
+transact:
+  {{DOUG}} => register swarumpostfactory {{Postf}}
+transact:
+  {{DOUG}} => register BLWCTopic {{BLWCTopic}}
+transact:
+  {{DOUG}} => register BLWCThread {{BLWCThread}}
+transact:
+  {{DOUG}} => register BLWPostTT {{BLWPostTT}}
+transact:
+  {{DOUG}} => register BLWVoteUpDown {{BLWVoteUpDown}}
+transact:
+  {{DOUG}} => register BLWBlacklist {{BLWBlacklist}}
+transact:
+  {{DOUG}} => register BLWFlagPost {{BLWFlagPost}}
+transact:
+  {{DOUG}} => register BLWPromotePost {{BLWPromotePost}}
+transact:
+  {{DOUG}} => register BLWRemoveFlag {{BLWRemoveFlag}}
+transact:
+  {{DOUG}} => register BLWRemovePromoted {{BLWRemovePromoted}}
+transact:
+  {{DOUG}} => register BLWMoveThread {{BLWMoveThread}}
+transact:
+  {{DOUG}} => register BLWAddAP {{BLWAddAP}}
+transact:
+  {{DOUG}} => register BLWAddBylaw {{BLWAddBylaw}}
+transact:
+  {{DOUG}} => register BLWAddPerm {{BLWAddPerm}}
+transact:
+  {{DOUG}} => register BLWAddToDoug {{BLWAddToDoug}}
+transact:
+  {{DOUG}} => register BLWDBH {{BLWDBH}}
+transact:
+  {{DOUG}} => register BLWReg {{BLWReg}}
+transact:
+  {{DOUG}} => register BLWRemovePerms {{BLWRemovePerms}}
+transact:
+  {{DOUG}} => register BLWSetPerms {{BLWSetPerms}}
+
+#This one should be 5 normally
+transact:
+  {{DOUG}} => setrepmul 0x10
+
+
+# Initalize the Swarum Tops
+transact:
+  {{Swarum}} => init '' '' '' {{DOUG}}
+transact:
+  {{Swarum}} => setparent {{DOUG}}
+transact:
+  {{Blacklist}} => init '' '' '' {{DOUG}}
+transact:
+  {{Blacklist}} => setparent {{DOUG}}
+transact:
+  {{flaggedlist}} => init '' '' '' {{DOUG}}
+transact:
+  {{flaggedlist}} => setparent {{DOUG}}
+transact:
+  {{promotedList}} => init '' '' '' {{DOUG}}
+transact:
+  {{promotedList}} => setparent {{DOUG}}
+transact:
+  {{flashnoticeList}} => init '' '' '' {{DOUG}}
+transact:
+  {{flashnoticeList}} => setparent {{DOUG}}
+
+
+# Next we set permissions for the Bylaws.
+transact:
+  {{DOUG}} => setperm doug {{BLWCTopic}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWCThread}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWPostTT}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWVoteUpDown}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWBlacklist}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWFlagPost}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWPromotePost}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWRemoveFlag}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWMoveThread}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWRemovePromoted}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWAddAP}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWAddBylaw}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWAddPerm}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWAddToDoug}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWDBH}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWReg}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWRemovePerms}} 0x1
+transact:
+  {{DOUG}} => setperm doug {{BLWSetPerms}} 0x1
+
+# Log those deploys.
+log:
+  Doug => {{DOUG}}
+log:
+  CitizenRep => {{rep}}
+log:
+  ModRep => {{modrep}}
+log:
+  Swarum => {{Swarum}}
+log:
+  Blacklist => {{Blacklist}}
+log:
+  Flaglist => {{flaggedlist}}
+log:
+  PromoteList => {{promotedList}}
+log:
+  FlashNoticeList => {{flashnoticeList}}
+log:
+  TopicFactory => {{Topicf}}
+log:
+  ThreadFactory => {{Threadf}}
+log:
+  PostFactory => {{Postf}}
+log:
+  CreateTopicByLaw => {{BLWCTopic}}
+log:
+  CreateThreadByLaw => {{BLWCThread}}
+log:
+  CreatePostByLaw => {{BLWPostTT}}
+log:
+  VoteUpDownByLaw => {{BLWVoteUpDown}}
+log:
+  BlackListByLaw => {{BLWBlacklist}}
+log:
+  FlagPostByLaw => {{BLWFlagPost}}
+log:
+  PromotePostByLaw => {{BLWPromotePost}}
+log:
+  RemoveFlagByLaw => {{BLWRemoveFlag}}
+log:
+  RemovePromoted => {{BLWRemovePromoted}}
+log:
+  MoveThread => {{BLWMoveThread}}
+log:
+  AddAP => {{BLWAddAP}}
+log:
+  AddByLaw => {{BLWAddBylaw}}
+log:
+  AddPerm => {{BLWAddPerm}}
+log:
+  AddtoDoug => {{BLWAddToDoug}}
+log:
+  DecentralizedBanHammer => {{BLWDBH}}
+log:
+  MemberReg => {{BLWReg}}
+log:
+  RemovePerms => {{BLWRemovePerms}}
+log:
+  SetPerms => {{BLWSetPerms}}
+log:
+  All => Done

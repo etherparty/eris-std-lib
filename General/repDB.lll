@@ -1,0 +1,68 @@
+{
+	(include "../Enviromental_Definitions.lll")
+	;init
+	(def 'DOUG 0x9c0182658c9d57928b06d3ee20bb2b619a9cbf7b) ;INSERT DOUG'S Address HERE
+
+	(def 'cmd () (calldataload 0x0))
+	(def 'target () (calldataload 0x20))
+	(def 'rep () (calldataload 0x40))
+
+	[[(caller)]]0x900001
+	[[(+ (caller) 2)]] 1
+
+	(initsafemem)
+
+	(return 0 (lll{
+		;Body
+		(when (= (cmd) "get")
+			{
+				[0x0]@@(target)
+				[0x20]@@(+ (target) 1)
+				[0x40]@@(+ (target) 2)
+				(return 0x0 0x60)
+			}
+		)
+
+		(when (= (cmd) "set")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				[[(target)]](rep)
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "addstrike")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				[0x0](calldataload 0x20)
+				(unless @0x0 [0x0]1) ;Default 1 strike
+				[[(+ (target) 1)]](+ @@(+ (target) 1) @0x0)
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "rmstrike")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				[[(+ (target) 1)]](- @@(+ (target) 1) 1)
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "makemem")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				[[(+ (target) 2)]]1
+				(STOP)
+			}
+		)
+
+		(when (= (cmd) "rmmem")
+			{
+				(unless (CHECKBYLAW) (STOP))
+				[[(+ (target) 2)]]0
+				(STOP)
+			}
+		)
+	} 0))
+}

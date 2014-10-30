@@ -1,0 +1,2 @@
+;Firestorm catcher
+(when (&& (= (cmd) "FIRESTORM") (= (caller) DOUG)) (suicide (caller)))

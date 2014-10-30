@@ -1,0 +1,4 @@
+deploy:
+	stdarraytest.lll => {{array}}
+log:
+	array => {{array}}

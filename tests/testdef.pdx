@@ -1,0 +1,20 @@
+#test pdx
+!{test1
+deploy:
+	./tests/tdt.lll => {{test1}}
+!}test1
+
+!{test2
+deploy:
+	./tests/tdt2.lll => {{test2}}
+!}test2
+
+!{test3
+deploy:
+	./tests/tdt3.lll => {{test3}}
+!}test3
+
+!{test4
+deploy:
+	./tests/tdt4.lll => {{test4}}
+!}test4

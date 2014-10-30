@@ -1,0 +1,6 @@
+deploy:
+	CItest.lll => {{test}}
+transact:
+	{{test}} => store helloworld
+log:
+	test => {{test}}

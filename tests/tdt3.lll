@@ -1,0 +1,8 @@
+{
+	(include "testdef.def")
+	(include "testdefinherit.def")
+
+	(tdstore 0xFEEDFACE)
+
+	(tdistore 0xDEADBEEF)
+}
