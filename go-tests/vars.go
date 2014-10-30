@@ -1,6 +1,7 @@
 package vars
 
 import (
+    "fmt"
     "math/big"
     "bytes"
     "github.com/eris-ltd/thelonious/ethstate"
@@ -8,6 +9,7 @@ import (
     "github.com/eris-ltd/thelonious/ethcrypto"
 )
 
+// each var comes with 3 permissions: add, rm, mod
 var StdVarSize = 3
 
 // location of a var is 1 followed by the first 8 bytes of its sha3
@@ -20,8 +22,6 @@ func VariName(name string) []byte{
 
 /*
     All interfaces are in strings, but array indices are ints.
-
-
 */
 
 
@@ -35,11 +35,15 @@ func GetSingle(addr, name string, state *ethstate.State) []byte {
     return (obj.GetStorage(ethutil.BigD(base))).Bytes()
 }
 
-func GetArrayIndex(addr, name string, index int, state *ethstate.State) []byte{
-    return GetKeyedArrayIndex(addr, name, "0x0", index, state)
+func GetArrayElement(addr, name string, index int, state *ethstate.State) []byte{
+    return GetKeyedArrayElement(addr, name, "0x0", index, state)
 }
 
-func GetKeyedArrayIndex(addr, name, key string, index int, state *ethstate.State) []byte {
+func GetArray(addr, name string, state *ethstate.State) [][]byte{
+    return GetKeyedArray(addr, name, "0x0", state)
+}
+
+func GetKeyedArrayElement(addr, name, key string, index int, state *ethstate.State) []byte {
     bigBase := big.NewInt(0)
     bigBase2 := big.NewInt(0)
 
@@ -55,6 +59,9 @@ func GetKeyedArrayIndex(addr, name, key string, index int, state *ethstate.State
     elementSize := ethutil.BigD(elementSizeBytes).Uint64()
 
     // key should be trailing 20 bytes
+    if l := len(key); l > 20{
+        key = key[l-20:]
+    }
 
     // what slot does the array start at:
     keyBytes := ethutil.UserHex2Bytes(key)
@@ -84,10 +91,34 @@ func GetKeyedArrayIndex(addr, name, key string, index int, state *ethstate.State
     return v.Bytes()
 }
 
-func getLinkedList(addr, name, key string, state *ethstate.State){
-
+func GetKeyedArray(addr, name, key string, state *ethstate.State) [][]byte{
+    return nil
 }
 
+func GetLinkedListElement(addr, name, key string, state *ethstate.State) []byte{
+    bigBase := big.NewInt(0)
 
+    byteAddr := ethutil.Hex2Bytes(addr)
+    obj := state.GetStateObject(byteAddr)
+    base := VariName(name)
 
+    // key should be trailing 20 bytes
+    if l := len(key); l > 20{
+        key = key[l-20:]
+    }
+    fmt.Println("key:", key)
+
+    // get slot for this keyed element of linked list
+    keyBytes := ethutil.PackTxDataArgs2(key)
+    fmt.Println("keybytes:", keyBytes)
+    keyBytesShift := append(keyBytes, []byte{1,0,0}...)[3:]
+    slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
+    fmt.Println("keyBytesShift:", keyBytesShift)
+    fmt.Println("slotbig:", slotBig)
+
+    // value is right at slot    
+    v := obj.GetStorage(slotBig)          
+    fmt.Println(ethutil.Bytes2Hex(slotBig.Bytes()))
+    return v.Bytes()
+}
 
