@@ -28,9 +28,10 @@
 	(def 'IllPrevSlot (base key) (llllPrevSlot slot))
 	(def 'IllNextSlot (base key) (llllNextSlot slot))
 
-	(def 'IllInit (base addperm rmperm modperm)
+	(def 'IllInit (base name addperm rmperm modperm)
 		{
 			[[base]]"linkedlist"
+			[[(IvnSlot base)]]name
 			[[(IvapSlot base)]]addperm
 			[[(IvrpSlot base)]]rmperm
 			[[(IvmpSlot base)]]modperm
@@ -65,7 +66,7 @@
 	(def 'llHeadSlot (name) (IllHeadSlot (vari name)))
 	(def 'llLenSlot (name) (IllLenSlot (vari name)))
 
-	(def 'llInit (name addperm rmperm modperm) (IllInit (vari name) addperm rmperm modperm))
+	(def 'llInit (name addperm rmperm modperm) (IllInit (vari name) name addperm rmperm modperm))
 	(def 'llAddLink (name key value) (IllAddLink (vari name) (llCTS name key) value))
 	(def 'llRmLink (name key) (IllRmLink (vari name) (llCTS name key)))
 
@@ -85,7 +86,7 @@
 	(def 'nllHeadSlot (name) (IllHeadSlot (vari name)))
 	(def 'nllLenSlot (name) (IllLenSlot (vari name)))
 
-	(def 'nllInit (name addperm rmperm modperm) (IllInit (vari name) addperm rmperm modperm))
+	(def 'nllInit (name addperm rmperm modperm) (IllInit (vari name) name addperm rmperm modperm))
 	(def 'nllAddLink (name key value) (IllAddLink (vari name) (nllCTS name key) value))
 	(def 'nllRmLink (name key) (IllRmLink (vari name) (nllCTS name key)))
 

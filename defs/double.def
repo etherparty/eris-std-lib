@@ -14,9 +14,10 @@
 	(def 'IdoubleValue1 (value) @@(IdoubleVS1 value))
 	(def 'IdoubleValue2 (value) @@(IdoubleVS2 value))
 
-	(def 'IdoubleInit (base addperm rmperm modperm value value2)
+	(def 'IdoubleInit (base name addperm rmperm modperm value value2)
 		{
 			[[base]]"double"
+			[[(IvnSlot base)]]name
 			[[(IvapSlot base)]]addperm
 			[[(IvrpSlot base)]]rmperm 		
 			[[(IvmpSlot base)]]modperm
@@ -54,18 +55,7 @@
 	(def 'doubleValue1 (name) @@(IdoubleVS1 (vari name)))
 	(def 'doubleValue2 (name) @@(IdoubleVS2 (vari name)))
 
-	(def 'doubleInit (name addperm rmperm modperm value value2) (IdoubleInit (vari name) addperm rmperm modperm value value2))
-;	(def 'doubleInit (name addperm rmperm modperm value value2)
-;		{
-;			[[@@0x0]](vari name)
-;			[[(+ @@0x0 1)]]addperm
-;			[[(+ @@0x0 2)]]rmperm
-;			[[(+ @@0x0 3)]]modperm
-;			[[(+ @@0x0 4)]]value
-;			[[(+ @@0x0 5)]]value2
-;			[[0x0]](+ @@0x0 0x10)
-;		}
-;	)
+	(def 'doubleInit (name addperm rmperm modperm value value2) (IdoubleInit (vari name) name addperm rmperm modperm value value2))
 	(def 'doubleLoad (name mem) (IdoubleLoad (vari name) mem))
 	(def 'doubleSet (name value value2) (IdoubleSet (vari name) value value2))
 	(def 'doubleStore (name mem boolmem) (IdoubleStore (vari name) mem boolmem))

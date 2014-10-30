@@ -10,22 +10,25 @@
 {{double}}; 0x15; 0x3030
 
 {{double}}; {{A}}; "double"
-{{double}}; {{A}}+1; "add1"
-{{double}}; {{A}}+2; "rm1"
-{{double}}; {{A}}+3; "mod1"
-{{double}}; {{A}}+4; 0x1111
-{{double}}; {{A}}+5; 0x1010
+{{double}}; {{A}}+1; "test1"
+{{double}}; {{A}}+2; "add1"
+{{double}}; {{A}}+3; "rm1"
+{{double}}; {{A}}+4; "mod1"
+{{double}}; {{A}}+5; 0x1111
+{{double}}; {{A}}+6; 0x1010
 
 {{double}}; {{B}}; "double"
-{{double}}; {{B}}+1; "add2"
-{{double}}; {{B}}+2; "rm2"
-{{double}}; {{B}}+3; "mod2"
-{{double}}; {{B}}+4; 0x2222
-{{double}}; {{B}}+5; 0x2020
+{{double}}; {{B}}+1; "test2"
+{{double}}; {{B}}+2; "add2"
+{{double}}; {{B}}+3; "rm2"
+{{double}}; {{B}}+4; "mod2"
+{{double}}; {{B}}+5; 0x2222
+{{double}}; {{B}}+6; 0x2020
 
 {{double}}; {{C}}; "double"
-{{double}}; {{C}}+1; "add3"
-{{double}}; {{C}}+2; "rm3"
-{{double}}; {{C}}+3; "mod3"
-{{double}}; {{C}}+4; 0x3333
-{{double}}; {{C}}+5; 0x3030
+{{double}}; {{C}}+1; "test3"
+{{double}}; {{C}}+2; "add3"
+{{double}}; {{C}}+3; "rm3"
+{{double}}; {{C}}+4; "mod3"
+{{double}}; {{C}}+5; 0x3333
+{{double}}; {{C}}+6; 0x3030
