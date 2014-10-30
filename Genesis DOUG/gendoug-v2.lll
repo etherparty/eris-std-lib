@@ -159,7 +159,7 @@
 
 		(when (= (cmd) "checkname")
 			{
-				[0x0](stdnllGet "DOUG" (name))
+				[0x0](llGet "DOUG" (name))
 				(return 0x0 0x20) ; Return the Address
 			}
 		)
@@ -168,7 +168,7 @@
 			{
 				(unless (BLcheck (ORIGIN)) (STOP))
 
-				(stdnllAddLink "DOUG" (name) (target))
+				(llAddLink "DOUG" (name) (target))
 
 				;C3D Data Attached
 				[0x300](name)
@@ -211,7 +211,7 @@
 
 		(when (= (cmd) "checkperm")
 			{
-				[0x0](karrayGetE "perms" (target) (nllGet "permnames" (name)))
+				[0x0](arrayGetE "perms" (target) (llGet "permnames" (name)))
 				(return 0x0 0x20) ;Return requested value
 			}
 		)
@@ -219,7 +219,7 @@
 		(when (= (cmd) "setperm")
 			{
 				(unless (BLcheck (ORIGIN)) (STOP))
-				(karraySetE "perms" (target) (nllGet "permnames" (name)) (permnum))
+				(arraySetE "perms" (target) (llGet "permnames" (name)) (permnum))
 
 				[0x0]1
 				(return 0x0 0x20)
@@ -230,7 +230,7 @@
 			{
 
 				(unless (BLcheck (ORIGIN)) (STOP))
-				(nllAddLink "permnames" (name) (+ @@(nllLenSlot "permnames") 1))
+				(llAddLink "permnames" (name) (+ @@(llLenSlot "permnames") 1))
 
 				[0x0]1
 				(return 0x0 0x20)

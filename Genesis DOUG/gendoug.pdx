@@ -1,4 +1,6 @@
 !{dougdiff
 deploy:
 	gendoug-v2.lll => {{doug}}
+transact:
+	{{doug}} => "setperm" "mine" 0xFEEDDEADFACEBEEF 8
 !}dougdiff
