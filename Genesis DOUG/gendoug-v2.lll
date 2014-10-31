@@ -85,6 +85,30 @@
 ;"name" - Name of variable
 ;-------------------------------------
 
+;CONSENSUS FUNCTIONS
+
+;addminer
+;------------------------------------------------------------------------------------------------
+;Add a target address to the list of miners, set relevant data, and give them permission to mine
+;Permission Requirements: doug
+;"addminer" 0xmineraddr "minername" #stake
+;Returns: [0 - Failure, 1 - Success]
+;------------------------------------------------------------------------------------------------
+;"name"   - Name associated to miner
+;0xTarget - Address of miner
+;#stake   - Stake for that miner
+;------------------------------------------------------------------------------------------------
+
+;rmminer
+;------------------------------------------------------------------------------------------------
+;Remove a Target address to the list of miners, and set their mining permission to mine
+;Permission Requirements: doug
+;"rmminer" 0xmineraddress
+;Returns: [0 - Failure, 1 - Success]
+;------------------------------------------------------------------------------------------------
+;0xmineraddress - Miner's public address (who you are removing)
+;------------------------------------------------------------------------------------------------
+
 {
 	(include "../defs/single.def")
 	(include "../defs/stdarray.def")
@@ -112,6 +136,7 @@
 	(arraySetE "perms" (CALLER) 2 1)
 	(arraySetE "perms" (CALLER) 3 1)
 
+;	(def 'BLcheck (addr) (|| (= (singleGet "public:doug") 1)(= (arrayGetE "perms" addr 0) 1)))
 	(def 'BLcheck (addr) (= (arrayGetE "perms" addr 0) 1))
 
 	;(Register)
@@ -130,6 +155,11 @@
 	;Permission
 	(def 'permnum () (calldataload 0x60))
 
+	;Consensus
+	(def 'mineraddr () (calldataload 0x20))
+	(def 'minername () (calldataload 0x40))
+	(def 'stake () (calldataload 0x60))
+
 	;INITIALIZATION
 	[0x300]0x88554646BA
 	[0x320] DOUGDATAMODEL
@@ -145,12 +175,26 @@
 
 	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1111 ;NEED TO REMOVE THIS
 
-	(singleInit "consensus" "none" "none" "none" 2)
 
-	;Setting Parameters for consensus type "2" -> rotating miners
+	;Consensus variables
+	;seq - sequential style round robin concensus
+
+	(singleInit "consensus" "none" "none" "none" "seq")
 	(singleInit "maxgas" "none" "none" "none" 0x10000000000000000)
-	(singleInit "conmine" "none" "none" "none" 5)
-	(llInit "ordering" "none" "none" "none" (CALLER) "GrandWarlordCasey")
+	(singleInit "blocktime" "none" "none" "none" 60)
+
+;	(singleInit "public:doug" "none" "none" "none" 0)
+	(singleInit "public:mine" "none" "none" "none" 0)
+	(singleInit "public:create" "none" "none" "none" 0)
+	(singleInit "public:transact" "none" "none" "none" 0)
+
+
+	;Setting Parameters for consensus type "seq" -> rotating miners
+
+	(llInit "seq:name" "none" "none" "none")
+	(llAddLink "seq:name" (CALLER) "GrandWarlordCasey")
+	(llInit "seq:stake" "none" "none" "none")
+	(llAddLink "seq:stake" (CALLER) 10)
 
 	(return 0 (lll {
 
@@ -220,7 +264,6 @@
 			{
 				(unless (BLcheck (ORIGIN)) (STOP))
 				(arraySetE "perms" (target) (llGet "permnames" (name)) (permnum))
-
 				[0x0]1
 				(return 0x0 0x20)
 			}
@@ -236,5 +279,33 @@
 				(return 0x0 0x20)
 			}
 		)
+
+	;Consensus Functions
+	;========================================================================================
+		(when (= (cmd) "addminer")
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(llAddLink "seq:name" (target) (name))
+				(llAddLink "seq:stake" (target) (stake))
+				(arraySetE "perms" (target) (llGet "permnames" "mine") 1)
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "rmminer")
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(llRmLink "seq:name" (mineraddr))
+				(llRmLink "seq:stake" (mineraddr))
+				(arraySetE "perms" (mineraddr) (llGet "permnames" "mine") 0)
+
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+
 	} 0))
 }
