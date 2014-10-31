@@ -30,19 +30,23 @@
 
 	(def 'IllInit (base name addperm rmperm modperm)
 		{
-			[[base]]"linkedlist"
-			[[(IvnSlot base)]]name
-			[[(IvapSlot base)]]addperm
-			[[(IvrpSlot base)]]rmperm
-			[[(IvmpSlot base)]]modperm
+			(when (= @@base 0x0)
+				{
+					[[base]]"linkedlist"
+					[[(IvnSlot base)]]name
+					[[(IvapSlot base)]]addperm
+					[[(IvrpSlot base)]]rmperm
+					[[(IvmpSlot base)]]modperm
+				}
+			)
 		}
 	)
 
-	(def 'IllAddLink (base slot value) (llllAddLink (llbase base) slot value))
+	(def 'IllAddLink (base slot value) (when (= @@base "linkedlist") (llllAddLink (llbase base) slot value)))
 
-	(def 'IllRmLink (base slot) (llllRmLink (llbase base) slot))
+	(def 'IllRmLink (base slot) (when (= @@base "linkedlist") (llllRmLink (llbase base) slot)))
 
-	(def 'IllSet (base slot value) (llllSet (llbase base) slot 0 value))
+	(def 'IllSet (base slot value) (when (= @@base "linkedlist") (llllSet (llbase base) slot 0 value)))
 
 	(def 'IllStore (base slot mem membool)
 		{
@@ -75,24 +79,4 @@
 
 	(def 'llSet (name key value) (IllSet (vari name) (llCTS name key) value))
 	(def 'llStore (name key mem membool) (IllStore (vari name) (llCTS name key) mem membool))
-
-	;Using name keys (strings)
-
-	(def 'nllCTS (name key) (InllCTS (vari name) key))
-	(def 'nllprevslot (name key) (Illprevslot (vari name) (nllCTS name key)))
-	(def 'nllnextslot (name key) (Illnextslot (vari name) (nllCTS name key)))
-
-	(def 'nllTailSlot (name) (IllTailSlot (vari name)))
-	(def 'nllHeadSlot (name) (IllHeadSlot (vari name)))
-	(def 'nllLenSlot (name) (IllLenSlot (vari name)))
-
-	(def 'nllInit (name addperm rmperm modperm) (IllInit (vari name) name addperm rmperm modperm))
-	(def 'nllAddLink (name key value) (IllAddLink (vari name) (nllCTS name key) value))
-	(def 'nllRmLink (name key) (IllRmLink (vari name) (nllCTS name key)))
-
-	(def 'nllGet (name key) (InllGet (vari name) (nllCTS name key)))
-	(def 'nllLoad (name key mem) (IllLoad (vari name) (nllCTS name key) mem))
-
-	(def 'nllSet (name key value) (IllSet (vari name) (nllCTS name key) value))
-	(def 'nllStore (name key mem membool) (IllStore (vari name) (nllCTS name key) mem membool))
 }

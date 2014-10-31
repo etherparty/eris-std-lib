@@ -20,15 +20,19 @@
 
 	(def 'IkvInit (base name addperm rmperm modperm)
 		{
-			[[base]]"keyvalue"
-			[[(IvnSlot base)]]name
-			[[(IvapSlot base)]]addperm
-			[[(IvrpSlot base)]]rmperm
-			[[(IvmpSlot base)]]modperm
+			(when (= @@base 0x0)
+				{
+					[[base]]"keyvalue"
+					[[(IvnSlot base)]]name
+					[[(IvapSlot base)]]addperm
+					[[(IvrpSlot base)]]rmperm
+					[[(IvmpSlot base)]]modperm
+				}
+			)
 		}
 	)
 
-	(def 'IkvSet (slot value) (llkvSet slot 0 value))
+	(def 'IkvSet (slot value) (when (= @@base "keyvalue") (llkvSet slot 0 value)))
 
 	(def 'IkvStore (slot mem membool)
 		{
@@ -51,6 +55,6 @@
 	(def 'kvGet (name key) (IkvGet (kvCTS name key)))
 	(def 'kvLoad (name key mem) (IkvLoad (kvCTS name key) mem))
 
-	(def 'kvSet (name key value) (IkvSet (kvCTS name key) value))
+	(def 'kvSet (name key value) (IkvSet (vari name) (kvCTS name key) value))
 	(def 'kvStore (name key mem membool) (IkvStore (kvCTS name key) mem membool))
 }

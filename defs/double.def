@@ -16,13 +16,17 @@
 
 	(def 'IdoubleInit (base name addperm rmperm modperm value value2)
 		{
-			[[base]]"double"
-			[[(IvnSlot base)]]name
-			[[(IvapSlot base)]]addperm
-			[[(IvrpSlot base)]]rmperm 		
-			[[(IvmpSlot base)]]modperm
-			[[(IdoubleVS1 base)]]value
-			[[(IdoubleVS2 base)]]value2
+			(when (= @@base 0x0)
+				{
+					[[base]]"double"
+					[[(IvnSlot base)]]name
+					[[(IvapSlot base)]]addperm
+					[[(IvrpSlot base)]]rmperm 		
+					[[(IvmpSlot base)]]modperm
+					[[(IdoubleVS1 base)]]value
+					[[(IdoubleVS2 base)]]value2
+				}
+			)
 		}
 	)
 	(def 'IdoubleLoad (base mem)
@@ -36,8 +40,12 @@
 
 	(def 'IdoubleSet (base value value2)
 		{
-			[[(IdoubleVS1 base)]]value
-			[[(IdoubleVS2 base)]]value2
+			(when (= @@base "double")
+				{
+					[[(IdoubleVS1 base)]]value
+					[[(IdoubleVS2 base)]]value2
+				}
+			)
 		}
 	)
 

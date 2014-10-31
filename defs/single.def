@@ -8,23 +8,27 @@
 	;+ stdVSsize +1 : value
 
 	;INTERNALs
-	(def 'IsingleVS (base) (+ base (+ stdVSsize 1)))
+	(def 'IsingleVS (base) (+ (varbase base) 1)))
 	(def 'IsingleValue (base) @@(IsingleVS base))
 
 	(def 'IsingleInit (base name addperm rmperm modperm value)
 		{
-			[[base]]"single"
-			[[(IvnSlot base)]]name
-			[[(IvapSlot base)]]addperm
-			[[(IvrpSlot base)]]rmperm
-			[[(IvmpSlot base)]]modperm
-			[[(IsingleVS base)]]value
+			(when (= @@base 0x0)
+				{
+					[[base]]"single"
+					[[(IvnSlot base)]]name
+					[[(IvapSlot base)]]addperm
+					[[(IvrpSlot base)]]rmperm
+					[[(IvmpSlot base)]]modperm
+					[[(IsingleVS base)]]value
+				}
+			)
 		}
 	)
 
 	(def 'IsingleLoad (base mem) [mem]@@(IsingleVS base)) ;mem is an address in memory to which we write the values
 	(def 'IsingleGet (base) @@(IsingleVS base))
-	(def 'IsingleSet (base value) [[(IsingleVS base)]]value)
+	(def 'IsingleSet (base value) (when (= @@base "single) [[(IsingleVS base)]]value))
 
 	;boolmem determines if it read from memory or from calldata array in order to set it.
 	(def 'IsingleStore (name mem boolmem)

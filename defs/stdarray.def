@@ -35,7 +35,7 @@
 
 	(def 'IarrayLoadE (base key elnum mem) [mem](llarrayGetE (varbase base) (IarrayCTS base key) elnum))
 
-	(def 'IarraySetE (base key elnum value) (llarraySetE (varbase base) (IarrayCTS base key) elnum value))
+	(def 'IarraySetE (base key elnum value) (when (= @@base "array") (llarraySetE (varbase base) (IarrayCTS base key) elnum value)))
 
 	(def 'IarrayStoreE (base key elnum mem membool) 
 		{
@@ -48,14 +48,18 @@
 
 	;This is the only one that needs to use the variable slots
 	(def 'IarrayInit (base name addperm rmperm modperm Esize Allsize)
-		{
-			[[base]]"array"
-			[[(IvnSlot base)]]name
-			[[(IvapSlot base)]]addperm
-			[[(IvrpSlot base)]]rmperm
-			[[(IvmpSlot base)]]modperm
-			[[(IarrayESizeSlot base)]]Esize
-			[[(IarrayAllSSlot base)]]Allsize
+		{	
+			(when (= @@base 0x0)
+				{
+					[[base]]"array"
+					[[(IvnSlot base)]]name
+					[[(IvapSlot base)]]addperm
+					[[(IvrpSlot base)]]rmperm
+					[[(IvmpSlot base)]]modperm
+					[[(IarrayESizeSlot base)]]Esize
+					[[(IarrayAllSSlot base)]]Allsize
+				}
+			)
 		}
 	)
 	
