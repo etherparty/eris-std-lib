@@ -1,7 +1,6 @@
 package vars
 
 import (
-    "fmt"
     "math/big"
     "bytes"
     "github.com/eris-ltd/thelonious/ethstate"
@@ -42,15 +41,13 @@ func GetArray(addr []byte, name string, state *ethstate.State) [][]byte{
     return GetKeyedArray(addr, name, "0x0", state)
 }
 
+// key must come as hex!!!!!!
 func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethstate.State) []byte {
-    fmt.Println("keyed array!######", name, key, index)
     bigBase := big.NewInt(0)
     bigBase2 := big.NewInt(0)
 
     obj := state.GetStateObject(addr)
-    fmt.Println("obj:", obj)
     base := VariName(name)
-    fmt.Println("base", base)
 
     // how big are the elements stored in this array:
     sizeLocator := make([]byte, len(base))
@@ -58,23 +55,19 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     sizeLocator = append(sizeLocator[:31], byte(StdVarSize+1))
     elementSizeBytes := (obj.GetStorage(ethutil.BigD(sizeLocator))).Bytes()
     elementSize := ethutil.BigD(elementSizeBytes).Uint64()
-    fmt.Println("el size", elementSize)
 
     // key should be trailing 20 bytes
     if len(key) >= 2 && key[:2] == "0x"{
         key = key[2:]
     }
-    if l := len(key); l > 20{
-        key = key[l-20:]
+    if l := len(key); l > 40{
+        key = key[l-40:]
     }
 
     // what slot does the array start at:
-    keyBytes := ethutil.PackTxDataArgs2(key)
+    keyBytes := ethutil.PackTxDataArgs2("0x"+key)
     keyBytesShift := append(keyBytes[3:], []byte{1,0,0}...)
     slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
-
-    fmt.Println("keybytes", keyBytes, keyBytesShift)
-    fmt.Println("slot biug:", slotBig)
 
     //numElements := obj.GetStorage(slotBig)
 
@@ -82,7 +75,6 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     entriesPerRow :=  int64(256 / elementSize)
     rowN := int64(index) / entriesPerRow
     colN := int64(index) % entriesPerRow
-    fmt.Println("row shit", entriesPerRow, rowN, colN)
 
     row := bigBase.Add(big.NewInt(1), bigBase.Add(slotBig, big.NewInt(rowN))).Bytes()
     rowStorage := (obj.GetStorage(ethutil.BigD(row))).Bytes()
@@ -94,11 +86,8 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     // so divide it by 2^(colN*elSize) and take modulo 2^elsize 
     // divide row storage by 2^(colN*elSize)
     colBig := bigBase.Exp(big.NewInt(2), bigBase.Mul(elSizeBig, big.NewInt(colN)), nil)
-    fmt.Println("rowstor", rowStorage)
-    fmt.Println("colBig:", colBig)
     r := bigBase.Div(rowStorageBig, colBig)
     w := bigBase2.Exp(big.NewInt(2), elSizeBig, nil)
-    fmt.Println("r w", r, w)
     v := bigBase.Mod(r, w)
     return v.Bytes()
 }
@@ -117,19 +106,14 @@ func GetLinkedListElement(addr []byte, name, key string, state *ethstate.State) 
     if l := len(key); l > 20{
         key = key[l-20:]
     }
-    fmt.Println("key:", key)
 
     // get slot for this keyed element of linked list
     keyBytes := ethutil.PackTxDataArgs2(key)
-    fmt.Println("keybytes:", keyBytes)
     keyBytesShift := append(keyBytes, []byte{1,0,0}...)[3:]
     slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
-    fmt.Println("keyBytesShift:", keyBytesShift)
-    fmt.Println("slotbig:", slotBig)
 
     // value is right at slot    
     v := obj.GetStorage(slotBig)          
-    fmt.Println(ethutil.Bytes2Hex(slotBig.Bytes()))
     return v.Bytes()
 }
 
