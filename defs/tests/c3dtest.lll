@@ -58,8 +58,7 @@
 	[0x3A0]"owner"
 	[0x3C0]"creator"
 	[0x3E0]"behaviour"
-
-	(C3DInit 0x300 0 1 0 0 0 0 0)
+	(C3DInit 0x300 0 1)
 
 	;Verify top slots were initialized correctly
 	[[0x31]](TopIndicator)

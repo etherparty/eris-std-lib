@@ -42,7 +42,7 @@
 	(def 'vrpSlot (name) (IvrpSlot (vari name)))
 	(def 'vmpSlot (name) (IvmpSlot (vari name)))
 
-	(def 'stdVSsize 0x4)
+	(def 'stdVSsize 0x5)
 
 	(def 'varbase (base) (+ base stdVSsize))
 }

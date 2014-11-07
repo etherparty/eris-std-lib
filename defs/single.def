@@ -5,10 +5,10 @@
 	;Single
 	;@vari(name): "single"
 
-	;+ stdVSsize +1 : value
+	;+ stdVSsize : value
 
 	;INTERNALs
-	(def 'IsingleVS (base) (+ (varbase base) 1)))
+	(def 'IsingleVS (base) (varbase base))
 	(def 'IsingleValue (base) @@(IsingleVS base))
 
 	(def 'IsingleInit (base name addperm rmperm modperm value)
@@ -28,7 +28,7 @@
 
 	(def 'IsingleLoad (base mem) [mem]@@(IsingleVS base)) ;mem is an address in memory to which we write the values
 	(def 'IsingleGet (base) @@(IsingleVS base))
-	(def 'IsingleSet (base value) (when (= @@base "single) [[(IsingleVS base)]]value))
+	(def 'IsingleSet (base value) (when (= @@base "single") [[(IsingleVS base)]]value))
 
 	;boolmem determines if it read from memory or from calldata array in order to set it.
 	(def 'IsingleStore (name mem boolmem)

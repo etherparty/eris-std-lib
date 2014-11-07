@@ -1,0 +1,4 @@
+{
+	(include "./includetest.def")
+	(test)
+}
