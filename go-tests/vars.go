@@ -3,9 +3,9 @@ package vars
 import (
     "math/big"
     "bytes"
-    "github.com/eris-ltd/thelonious/ethstate"
-    "github.com/eris-ltd/thelonious/ethutil"
-    "github.com/eris-ltd/thelonious/ethcrypto"
+    "github.com/eris-ltd/thelonious/monkstate"
+    "github.com/eris-ltd/thelonious/monkutil"
+    "github.com/eris-ltd/thelonious/monkcrypto"
 )
 
 // each var comes with 3 permissions: add, rm, mod
