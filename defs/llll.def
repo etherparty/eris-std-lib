@@ -7,9 +7,9 @@
 	;+ offset +2 : HeadSlot
 	;+ offset +3 : Length of list
 
-	(def 'llllTailSlot (base) (+ base 1))
-	(def 'llllHeadSlot (base) (+ base 2))
-	(def 'llllLenSlot (base) (+ base 3))
+	(def 'llllTailSlot (base) (+ base 0))
+	(def 'llllHeadSlot (base) (+ base 1))
+	(def 'llllLenSlot (base) (+ base 2))
 
 	;Linked list entry
 	;Note: keys can only be 20 bytes maximum
@@ -17,7 +17,8 @@
 	;+1 : Previous Entry
 	;+2 : Next Entry
 
-	(def 'llllSlotSize 0x2)
+	(def 'llllSlotSize 0x3)
+	
 	(def 'llllPrevSlot (slot) (+ slot 1))
 	(def 'llllNextSlot (slot) (+ slot 2))
 

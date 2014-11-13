@@ -125,7 +125,8 @@
 	;General structure
 
 	;Minimum Viable Doug Set Up
-	(llInit "permnames" "none" "none" "none" "doug" 0)
+	(llInit "permnames" "none" "none" "none")
+	(llAddLink "permnames" "doug" 0)
 	(llAddLink "permnames" "mine" 1)
 	(llAddLink "permnames" "create" 2)
 	(llAddLink "permnames" "transact" 3)

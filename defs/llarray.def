@@ -2,25 +2,21 @@
 {
 	;Format
 
-	;+ 1 : (1 4 8 32 256) bits - Size of each element
-	;+ 2 : # elements of allocated size (0 = "unlimited")
+	;+ 0 : (1 4 8 32 256) bits - Size of each element
+	;+ 1 : # elements of allocated size (0 = "unlimited")
 
 	;Keyed Component
 	;slot : Max Element number
 	;+1 : Start of array
 
+	(def 'llarrayESizeOffset 0)
+
 	(def 'llarrayMaxEOffset 0)
 	(def 'llarrayStartOffset 1)
 
-	;AllS = Allocated Size
-	(def 'test () [[0x42]]0xFEEDFACE)
-
-	(def 'llarrayESizeSlot (base) (+ base 1))
-
-	(def 'llarrayAllSSlot (base) (+ base 2))
+	(def 'llarrayESizeSlot (base) (+ base 0))
 
 	(def 'llarrayGetESize (base) @@(llarrayESizeSlot base))
-	(def 'llarrayGetAllS (base) @@(llarrayAllSSlot base))
 
 	(def 'llarrayMaxESlot (slot) (+ slot llarrayMaxEOffset))
 	(def 'llarrayStartSlot (slot) (+ slot llarrayStartOffset))

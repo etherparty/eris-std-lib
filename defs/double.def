@@ -5,12 +5,12 @@
 	;Double
 	;@vari(name): "double"
 	
-	;+ stdVSsize +1 : value  - Highest bytes first
-	;+ stdVSsize +2 : value2
+	;+ stdVSsize : value  - Highest bytes first
+	;+ stdVSsize : value2
 
 	;INTERNALs
-	(def 'IdoubleVS1 (value) (+ value (+ stdVSsize 1)))
-	(def 'IdoubleVS2 (value) (+ value (+ stdVSsize 2)))
+	(def 'IdoubleVS1 (value) (varbase value))
+	(def 'IdoubleVS2 (value) (+ (varbase value) 1))
 	(def 'IdoubleValue1 (value) @@(IdoubleVS1 value))
 	(def 'IdoubleValue2 (value) @@(IdoubleVS2 value))
 

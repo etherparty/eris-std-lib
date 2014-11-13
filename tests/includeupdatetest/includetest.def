@@ -1,0 +1,3 @@
+{
+	(def 'test () [[0xDEADBEEF]]0xFEED)
+}

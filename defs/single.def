@@ -5,10 +5,10 @@
 	;Single
 	;@vari(name): "single"
 
-	;+ stdVSsize +1 : value
+	;+ stdVSsize : value
 
 	;INTERNALs
-	(def 'IsingleVS (base) (+ (varbase base) 1))
+	(def 'IsingleVS (base) (varbase base))
 	(def 'IsingleValue (base) @@(IsingleVS base))
 
 	(def 'IsingleInit (base name addperm rmperm modperm value)
