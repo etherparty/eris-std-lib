@@ -3,9 +3,9 @@ package vars
 import (
     "math/big"
     "bytes"
-    "github.com/eris-ltd/thelonious/ethstate"
-    "github.com/eris-ltd/thelonious/ethutil"
-    "github.com/eris-ltd/thelonious/ethcrypto"
+    "github.com/eris-ltd/thelonious/monkstate"
+    "github.com/eris-ltd/thelonious/monkutil"
+    "github.com/eris-ltd/thelonious/monkcrypto"
 )
 
 // each var comes with 3 permissions: add, rm, mod
@@ -13,7 +13,7 @@ var StdVarSize = 4
 
 // location of a var is 1 followed by the first 8 bytes of its sha3
 func VariName(name string) []byte{
-    h := ethcrypto.Sha3Bin(ethutil.PackTxDataArgs2(name))
+    h := monkcrypto.Sha3Bin(monkutil.PackTxDataArgs2(name))
     base := append([]byte{1}, h[:8]...)
     base = append(base, bytes.Repeat([]byte{0}, 32-len(base))...)
     return base
@@ -26,23 +26,23 @@ func VariName(name string) []byte{
 
 // Single Type Variable.
 // (+ @@variname 1)
-func GetSingle(addr []byte , name string, state *ethstate.State) []byte {
+func GetSingle(addr []byte , name string, state *monkstate.State) []byte {
     obj := state.GetStateObject(addr)
     base := VariName(name)
     base[31] = byte(StdVarSize+1)
-    return (obj.GetStorage(ethutil.BigD(base))).Bytes()
+    return (obj.GetStorage(monkutil.BigD(base))).Bytes()
 }
 
-func GetArrayElement(addr []byte, name string, index int, state *ethstate.State) []byte{
+func GetArrayElement(addr []byte, name string, index int, state *monkstate.State) []byte{
     return GetKeyedArrayElement(addr, name, "0x0", index, state)
 }
 
-func GetArray(addr []byte, name string, state *ethstate.State) [][]byte{
+func GetArray(addr []byte, name string, state *monkstate.State) [][]byte{
     return GetKeyedArray(addr, name, "0x0", state)
 }
 
 // key must come as hex!!!!!!
-func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethstate.State) []byte {
+func GetKeyedArrayElement(addr []byte, name, key string, index int, state *monkstate.State) []byte {
     bigBase := big.NewInt(0)
     bigBase2 := big.NewInt(0)
 
@@ -53,8 +53,8 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     sizeLocator := make([]byte, len(base))
     copy(sizeLocator, base)
     sizeLocator = append(sizeLocator[:31], byte(StdVarSize+1))
-    elementSizeBytes := (obj.GetStorage(ethutil.BigD(sizeLocator))).Bytes()
-    elementSize := ethutil.BigD(elementSizeBytes).Uint64()
+    elementSizeBytes := (obj.GetStorage(monkutil.BigD(sizeLocator))).Bytes()
+    elementSize := monkutil.BigD(elementSizeBytes).Uint64()
 
     // key should be trailing 20 bytes
     if len(key) >= 2 && key[:2] == "0x"{
@@ -65,9 +65,9 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     }
 
     // what slot does the array start at:
-    keyBytes := ethutil.PackTxDataArgs2("0x"+key)
+    keyBytes := monkutil.PackTxDataArgs2("0x"+key)
     keyBytesShift := append(keyBytes[3:], []byte{1,0,0}...)
-    slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
+    slotBig := bigBase.Add(monkutil.BigD(base), monkutil.BigD(keyBytesShift))
 
     //numElements := obj.GetStorage(slotBig)
 
@@ -77,10 +77,10 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     colN := int64(index) % entriesPerRow
 
     row := bigBase.Add(big.NewInt(1), bigBase.Add(slotBig, big.NewInt(rowN))).Bytes()
-    rowStorage := (obj.GetStorage(ethutil.BigD(row))).Bytes()
-    rowStorageBig := ethutil.BigD(rowStorage)
+    rowStorage := (obj.GetStorage(monkutil.BigD(row))).Bytes()
+    rowStorageBig := monkutil.BigD(rowStorage)
 
-    elSizeBig := ethutil.BigD(elementSizeBytes)
+    elSizeBig := monkutil.BigD(elementSizeBytes)
     // row storage gives us a big number, from which we need to pull
     // an element of size elementsize.
     // so divide it by 2^(colN*elSize) and take modulo 2^elsize 
@@ -92,11 +92,11 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *ethst
     return v.Bytes()
 }
 
-func GetKeyedArray(addr []byte, name, key string, state *ethstate.State) [][]byte{
+func GetKeyedArray(addr []byte, name, key string, state *monkstate.State) [][]byte{
     return nil
 }
 
-func GetLinkedListElement(addr []byte, name, key string, state *ethstate.State) []byte{
+func GetLinkedListElement(addr []byte, name, key string, state *monkstate.State) []byte{
     bigBase := big.NewInt(0)
 
     obj := state.GetStateObject(addr)
@@ -108,9 +108,9 @@ func GetLinkedListElement(addr []byte, name, key string, state *ethstate.State) 
     }
 
     // get slot for this keyed element of linked list
-    keyBytes := ethutil.PackTxDataArgs2(key)
+    keyBytes := monkutil.PackTxDataArgs2(key)
     keyBytesShift := append(keyBytes, []byte{1,0,0}...)[3:]
-    slotBig := bigBase.Add(ethutil.BigD(base), ethutil.BigD(keyBytesShift))
+    slotBig := bigBase.Add(monkutil.BigD(base), monkutil.BigD(keyBytesShift))
 
     // value is right at slot    
     v := obj.GetStorage(slotBig)          
