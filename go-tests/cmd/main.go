@@ -3,24 +3,29 @@ package main
 import (
     "fmt"
     "github.com/eris-ltd/thelonious/monk"
-    "github.com/eris-ltd/thelonious/monkchain"
     "github.com/eris-ltd/thelonious/monkutil"
     "github.com/eris-ltd/eris-std-lib/go-tests"
 )
 
 func main(){
-    monkchain.NoGenDoug = true
-    e := monk.NewEth(nil)
+    e := monk.NewMonk(nil)
     e.ReadConfig("eth-config.json")
+    g := e.LoadGenesis(e.Config.GenesisConfig)
+    g.NoGenDoug = true
+    g.ModelName = "yes"
+    e.SetGenesis(g)
     e.Init() 
+
     e.Start() 
 
-    addr := e.DeployContract("var-tests.lll", "lll")
+    addrHex, _ := e.Script("var-tests.lll", "lll")
+    addr := monkutil.Hex2Bytes(addrHex)
+
     fmt.Println(addr)
 
     e.Commit()
 
-    state := e.Pipe.World().State()
+    state := e.MonkState()
 
     // test single
     s := vars.GetSingle(addr, "mySingle", state)
@@ -35,9 +40,18 @@ func main(){
     fmt.Println(monkutil.Bytes2Hex(t))
 
     // test linked list
-    l := vars.GetLinkedListElement(addr, "myLL", "balls", state)
+    l := vars.GetLinkedListHead(addr, "myLL", state)
+    fmt.Println(monkutil.Bytes2Hex(l))
+    l = vars.GetLinkedListElement(addr, "myLL", "balls", state)
     fmt.Println(monkutil.Bytes2Hex(l))
     l = vars.GetLinkedListElement(addr, "myLL", "paws", state)
     fmt.Println(monkutil.Bytes2Hex(l))
+    n := vars.GetLinkedListLength(addr, "myLL", state)
+    fmt.Println(n)
+    r := vars.GetLinkedList(addr, "myLL", state)
+    for i:=0;i<r.Len();i++{
+        fmt.Println(r.Value)
+        r = r.Next()
+    }
     
 }

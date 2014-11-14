@@ -3,6 +3,7 @@ package vars
 import (
     "math/big"
     "bytes"
+    "container/ring"
     "github.com/eris-ltd/thelonious/monkstate"
     "github.com/eris-ltd/thelonious/monkutil"
     "github.com/eris-ltd/thelonious/monkcrypto"
@@ -23,7 +24,6 @@ func VariName(name string) []byte{
     All interfaces are in strings, but array indices are ints.
 */
 
-
 // Single Type Variable.
 // (+ @@variname 1)
 func GetSingle(addr []byte , name string, state *monkstate.State) []byte {
@@ -33,15 +33,18 @@ func GetSingle(addr []byte , name string, state *monkstate.State) []byte {
     return (obj.GetStorage(monkutil.BigD(base))).Bytes()
 }
 
+// Return an element from an array type
 func GetArrayElement(addr []byte, name string, index int, state *monkstate.State) []byte{
     return GetKeyedArrayElement(addr, name, "0x0", index, state)
 }
 
+// Return the entire array
 func GetArray(addr []byte, name string, state *monkstate.State) [][]byte{
     return GetKeyedArray(addr, name, "0x0", state)
 }
 
 // key must come as hex!!!!!!
+// Return an element from keyed array type
 func GetKeyedArrayElement(addr []byte, name, key string, index int, state *monkstate.State) []byte {
     bigBase := big.NewInt(0)
     bigBase2 := big.NewInt(0)
@@ -92,10 +95,12 @@ func GetKeyedArrayElement(addr []byte, name, key string, index int, state *monks
     return v.Bytes()
 }
 
+// Return entire keyed array
 func GetKeyedArray(addr []byte, name, key string, state *monkstate.State) [][]byte{
     return nil
 }
 
+// Return an element from a linked list
 func GetLinkedListElement(addr []byte, name, key string, state *monkstate.State) []byte{
     bigBase := big.NewInt(0)
 
@@ -116,4 +121,55 @@ func GetLinkedListElement(addr []byte, name, key string, state *monkstate.State)
     v := obj.GetStorage(slotBig)          
     return v.Bytes()
 }
+
+func GetLinkedListLength(addr []byte, name string, state *monkstate.State) int{
+    obj := state.GetStateObject(addr)
+    base := VariName(name)
+    return getLinkedListLength(obj, base)
+}
+
+func getLinkedListLength(obj *monkstate.StateObject, base []byte) int{
+    nEleLoc := append(base[:len(base)-1], byte(StdVarSize+3))
+    nEl := obj.GetStorage(monkutil.BigD(nEleLoc))
+    return int(nEl.Uint())
+}
+
+func GetLinkedListHead(addr []byte, name string, state *monkstate.State) []byte{
+    obj := state.GetStateObject(addr)
+    base := VariName(name)
+    return getLinkedListHead(obj, base)
+}
+
+func getLinkedListHead(obj *monkstate.StateObject, base []byte) []byte{
+    headLocLoc := append(base[:len(base)-1], byte(StdVarSize+2))
+    headLoc := obj.GetStorage(monkutil.BigD(headLocLoc))
+    head := obj.GetStorage(headLoc.BigInt())
+    return head.Bytes()
+}
+
+
+func GetLinkedList(addr []byte, name string, state *monkstate.State) *ring.Ring{
+    bigBase := big.NewInt(0)
+
+    obj := state.GetStateObject(addr)
+    base := VariName(name)
+
+    n := getLinkedListLength(obj, base)
+
+    nextLocLoc := monkutil.BigD(append(base[:len(base)-1], byte(StdVarSize+1)))
+    nextLoc := obj.GetStorage(nextLocLoc).BigInt()
+    
+    r := ring.New(n)
+    for i := 0; i < n; i++{
+        r.Value = obj.GetStorage(nextLoc)
+        r = r.Next()
+
+        nextLocLoc = bigBase.Add(nextLoc, big.NewInt(2))
+        nextLoc = obj.GetStorage(nextLocLoc).BigInt()
+    }
+
+    return r
+}
+
+
 
