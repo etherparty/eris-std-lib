@@ -75,6 +75,40 @@
 ;#value - Value you are setting the variable to
 ;------------------------------------------------------
 
+;Set var is now more complex as the type matters what you pass it
+;Single
+;"name" "type" #value
+
+;Double
+;"name" "type" #value1 #value2
+
+;LinkedList
+;"name" "type" key #value
+
+;KeyValue
+;"name" "type" key #value
+
+;Array
+;"name" "type" key #elementNumber #value
+
+
+;Initvar is for initing
+
+;Single
+;"name" "type" #value
+
+;Double
+;"name" "type" #value1 #value2
+
+;LinkedList
+;"name" "type"
+
+;KeyValue
+;"name" "type"
+
+;Array
+;"name" "type" ESize
+
 ;getvar
 ;-------------------------------------
 ;Get the value associated with "name"
@@ -85,29 +119,22 @@
 ;"name" - Name of variable
 ;-------------------------------------
 
-;CONSENSUS FUNCTIONS
+;Single
+;"name"
 
-;addminer
-;------------------------------------------------------------------------------------------------
-;Add a target address to the list of miners, set relevant data, and give them permission to mine
-;Permission Requirements: doug
-;"addminer" 0xmineraddr "minername" #stake
-;Returns: [0 - Failure, 1 - Success]
-;------------------------------------------------------------------------------------------------
-;"name"   - Name associated to miner
-;0xTarget - Address of miner
-;#stake   - Stake for that miner
-;------------------------------------------------------------------------------------------------
+;Double
+;"name"
 
-;rmminer
-;------------------------------------------------------------------------------------------------
-;Remove a Target address to the list of miners, and set their mining permission to mine
-;Permission Requirements: doug
-;"rmminer" 0xmineraddress
-;Returns: [0 - Failure, 1 - Success]
-;------------------------------------------------------------------------------------------------
-;0xmineraddress - Miner's public address (who you are removing)
-;------------------------------------------------------------------------------------------------
+;LinkedList
+;"name" key
+
+;KeyValue
+;"name" key
+
+;Array
+;"name" key #elementNumber
+
+
 
 {
 	(include "../defs/stdvarspace.def")
@@ -221,6 +248,11 @@
 
 	;DOUG Variables
 	;=========================================================================================
+
+		(when (= (cmd) "getvartype")
+			[0x0](vtype (name))
+			(return 0x0 0x20)
+		)
 
 		(when (= (cmd) "getvar")
 			{
