@@ -75,6 +75,40 @@
 ;#value - Value you are setting the variable to
 ;------------------------------------------------------
 
+;Set var is now more complex as the type matters what you pass it
+;Single
+;"name" "type" #value
+
+;Double
+;"name" "type" #value1 #value2
+
+;LinkedList
+;"name" "type" key #value
+
+;KeyValue
+;"name" "type" key #value
+
+;Array
+;"name" "type" key #elementNumber #value
+
+
+;Initvar is for initing
+
+;Single
+;"name" "type" #value
+
+;Double
+;"name" "type" #value1 #value2
+
+;LinkedList
+;"name" "type"
+
+;KeyValue
+;"name" "type"
+
+;Array
+;"name" "type" ESize
+
 ;getvar
 ;-------------------------------------
 ;Get the value associated with "name"
@@ -85,31 +119,25 @@
 ;"name" - Name of variable
 ;-------------------------------------
 
-;CONSENSUS FUNCTIONS
+;Single
+;"name"
 
-;addminer
-;------------------------------------------------------------------------------------------------
-;Add a target address to the list of miners, set relevant data, and give them permission to mine
-;Permission Requirements: doug
-;"addminer" 0xmineraddr "minername" #stake
-;Returns: [0 - Failure, 1 - Success]
-;------------------------------------------------------------------------------------------------
-;"name"   - Name associated to miner
-;0xTarget - Address of miner
-;#stake   - Stake for that miner
-;------------------------------------------------------------------------------------------------
+;Double
+;"name"
 
-;rmminer
-;------------------------------------------------------------------------------------------------
-;Remove a Target address to the list of miners, and set their mining permission to mine
-;Permission Requirements: doug
-;"rmminer" 0xmineraddress
-;Returns: [0 - Failure, 1 - Success]
-;------------------------------------------------------------------------------------------------
-;0xmineraddress - Miner's public address (who you are removing)
-;------------------------------------------------------------------------------------------------
+;LinkedList
+;"name" key
+
+;KeyValue
+;"name" key
+
+;Array
+;"name" key #elementNumber
+
+
 
 {
+	(include "../defs/stdvarspace.def")
 	(include "../defs/single.def")
 	(include "../defs/stdarray.def")
 	(include "../defs/stdll.def")
@@ -127,15 +155,9 @@
 	;Minimum Viable Doug Set Up
 	(llInit "permnames" "none" "none" "none")
 	(llAddLink "permnames" "doug" 0)
-	(llAddLink "permnames" "mine" 1)
-	(llAddLink "permnames" "create" 2)
-	(llAddLink "permnames" "transact" 3)
 
-	(arrayInit "perms" "none" "none" "none" 4) ;Gives Caller all permissions
-	(arraySetE "perms" (CALLER) 0 1)
-	(arraySetE "perms" (CALLER) 1 1)
-	(arraySetE "perms" (CALLER) 2 1)
-	(arraySetE "perms" (CALLER) 3 1)
+	(arrayInit "perms" "none" "none" "none" 4) 
+	(arraySetE "perms" (CALLER) 0 1) ;Gives Caller DOUG
 
 ;	(def 'BLcheck (addr) (|| (= (singleGet "public:doug") 1)(= (arrayGetE "perms" addr 0) 1)))
 	(def 'BLcheck (addr) (= (arrayGetE "perms" addr 0) 1))
@@ -153,13 +175,28 @@
 	;DOUG Variable space
 	(def 'value () (calldataload 0x40))
 
+	(def 'key () (calldataload 0x40))
+	(def 'enum () (calldataload 0x60))
+
+
+	(def 'type () (calldataload 0x40))
+
+	(def 'svalue () (calldataload 0x60))
+
+	(def 'dvalue () (calldataload 0x40))
+	(def 'dvalue2 () (calldataload 0x60))
+
+	(def 'lkey () (calldataload 0x40))
+	(def 'lvalue () (calldataload 0x60))
+	
+	(def 'akey () (calldataload 0x40))
+	(def 'aenum () (calldataload 0x60))
+	(def 'avalue () (calldataload 0x80))
+
+	(def 'aesize () (calldataload 0x40))
+
 	;Permission
 	(def 'permnum () (calldataload 0x60))
-
-	;Consensus
-	(def 'mineraddr () (calldataload 0x20))
-	(def 'minername () (calldataload 0x40))
-	(def 'stake () (calldataload 0x60))
 
 	;INITIALIZATION
 	[0x300]0x88554646BA
@@ -172,32 +209,9 @@
 	[0x3E0]1
 	(C3DInit 0x300 0 1 0 0 0 0 0)
 
-	(llInit "DOUG" "none" "none" "none")
-	(llAddLink "DOUG" "DOUG" (Address))
+	(llInit "DOUG" "none" "none" "none" "DOUG" (Address))
 
 	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1111 ;NEED TO REMOVE THIS
-
-
-	;Consensus variables
-	;seq - sequential style round robin concensus
-
-	(singleInit "consensus" "none" "none" "none" "seq")
-	(singleInit "maxgastx" "none" "none" "none" 0x10000000000000000)
-	(singleInit "difficulty" "none" "none" "none" 0xd)
-	(singleInit "blocktime" "none" "none" "none" 0x14)
-
-;	(singleInit "public:doug" "none" "none" "none" 0)
-	(singleInit "public:mine" "none" "none" "none" 0)
-	(singleInit "public:create" "none" "none" "none" 0)
-	(singleInit "public:transact" "none" "none" "none" 0)
-
-
-	;Setting Parameters for consensus type "seq" -> rotating miners
-
-	(llInit "seq:name" "none" "none" "none")
-	;(llAddLink "seq:name" (CALLER) "GrandWarlordCasey")
-	(llInit "seq:stake" "none" "none" "none")
-	;(llAddLink "seq:stake" (CALLER) 10)
 
 	(return 0 (lll {
 
@@ -235,17 +249,135 @@
 	;DOUG Variables
 	;=========================================================================================
 
+		(when (= (cmd) "getvartype")
+			[0x0](vtype (name))
+			(return 0x0 0x20)
+		)
+
 		(when (= (cmd) "getvar")
 			{
-				[0x0](singleGet (name))
-				(return 0x0 0x20) ; Return the Address
+				(when (= (vtype (name)) "single")
+					{
+						[0x0](singleGet (name))
+						(return 0x0 0x20) ; Return the Address
+					}
+				)
+
+				(when (= (vtype (name)) "double")
+					{
+						(doubleload (name) 0x0)
+						(return 0x0 0x40) ; Return the Address
+					}
+				)
+
+				(when (= (vtype (name)) "linkedlist")
+					{
+						[0x0](llGet (name) (key))
+						(return 0x0 0x20) ; Return the Address
+					}
+				)
+
+				(when (= (vtype (name)) "keyvalue")
+					{
+						[0x0](kvGet (name) (key))
+						(return 0x0 0x20) ; Return the Address
+					}
+				)
+
+				(when (= (vtype (name)) "array")
+					{
+						[0x0](arrayGet (name) (key) (enum))
+						(return 0x0 0x20) ; Return the Address
+					}
+				)
 			}
 		)
 
 		(when (= (cmd) "setvar")
 			{
 				(unless (BLcheck (ORIGIN)) (STOP))
-				(singleSet (name) (value))
+				(when (= (type) "single")
+					{
+						(if (= (vtype (name)) 0)
+							(singleInit (name) "none" "none" "none" (svalue))
+							(singleSet (name) (svalue))
+						)
+					}
+				)
+
+				(when (= (type) "double")
+					{
+						(if (= (vtype (name)) 0)
+							(doubleInit (name) "none" "none" "none" (dvalue) (dvalue2))
+							(doubleSet (name) (dvalue) (dvalue2))
+						)
+					}
+				)
+
+				(when (= (type) "linkedlist")
+					{
+						(if (= (vtype (name)) 0)
+							{
+								(llInit (name) "none" "none" "none")
+								(llSet (name) (lkey) (lvalue))
+							}
+							(llSet (name) (lkey) (lvalue))
+						)
+					}
+				)
+
+				(when (= (type) "keyvalue")
+					{
+						(if (= (vtype (name)) 0)
+							{
+								(kvInit (name) "none" "none" "none")
+								(kvSet (name) (lkey) (lvalue))
+							}
+							(kvSet (name) (lkey) (lvalue))
+						)
+					}
+				)
+
+				(when (= (type) "array")
+					{
+						(if (= (vtype (name)) 0)
+							(STOP)
+							(llSet (name) (akey) (avalue))
+						)
+					}
+				)
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "initvar")
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(when (= (type) "single")
+					{
+						(if (= (vtype (name)) 0)
+							(singleInit (name) "none" "none" "none" (svalue))
+							(singleSet (name) (svalue))
+						)
+					}
+				)
+
+				(when (= (type) "double")
+					{
+						(if (= (vtype (name)) 0)
+							(doubleInit (name) "none" "none" "none" (dvalue) (dvalue2))
+							(doubleSet (name) (dvalue) (dvalue2))
+						)
+					}
+				)
+
+				(when (= (type) "linkedlist") (if (= (vtype (name)) 0) (llInit (name) "none" "none" "none") (STOP)))
+
+				(when (= (type) "keyvalue") (if (= (vtype (name)) 0) (kvInit (name) "none" "none" "none") (STOP)))
+
+				(when (= (type) "array") (if (= (vtype (name)) 0) (arrayInit (name) "none" "none" "none" (aesize)) (STOP)))
+
 				[0x0]1
 				(return 0x0 0x20)
 			}
@@ -281,33 +413,5 @@
 				(return 0x0 0x20)
 			}
 		)
-
-	;Consensus Functions
-	;========================================================================================
-		(when (= (cmd) "addminer")
-			{
-				(unless (BLcheck (ORIGIN)) (STOP))
-				(llAddLink "seq:name" (target) (name))
-				(llAddLink "seq:stake" (target) (stake))
-				(arraySetE "perms" (target) (llGet "permnames" "mine") 1)
-
-				[0x0]1
-				(return 0x0 0x20)
-			}
-		)
-
-		(when (= (cmd) "rmminer")
-			{
-				(unless (BLcheck (ORIGIN)) (STOP))
-				(llRmLink "seq:name" (mineraddr))
-				(llRmLink "seq:stake" (mineraddr))
-				(arraySetE "perms" (mineraddr) (llGet "permnames" "mine") 0)
-
-				[0x0]1
-				(return 0x0 0x20)
-			}
-		)
-
-
 	} 0))
 }
