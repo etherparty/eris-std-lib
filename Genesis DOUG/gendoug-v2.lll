@@ -172,7 +172,8 @@
 	[0x3E0]1
 	(C3DInit 0x300 0 1 0 0 0 0 0)
 
-	(llInit "DOUG" "none" "none" "none" "DOUG" (Address))
+	(llInit "DOUG" "none" "none" "none")
+	(llAddLink "DOUG" "DOUG" (Address))
 
 	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1111 ;NEED TO REMOVE THIS
 
