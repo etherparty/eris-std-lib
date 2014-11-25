@@ -14,9 +14,9 @@
     (arraySetE "myArray" 6 0x63)
 
     ; test linked list
-    (llInit "myLL" 0 0 0)
+    (llInit "myLL" "none" "none" "none")
     (llAddLink "myLL" "balls" 0x6)
     (llAddLink "myLL" "paws" 0x7)
-    (llAddLink "myLL" "monkeyturd" 0x19)
+    ;(llAddLink "myLL" "monkeyturd" 0x19)
 
 }

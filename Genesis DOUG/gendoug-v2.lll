@@ -181,8 +181,9 @@
 	;seq - sequential style round robin concensus
 
 	(singleInit "consensus" "none" "none" "none" "seq")
-	(singleInit "maxgas" "none" "none" "none" 0x10000000000000000)
-	(singleInit "blocktime" "none" "none" "none" 60)
+	(singleInit "maxgastx" "none" "none" "none" 0x10000000000000000)
+	(singleInit "difficulty" "none" "none" "none" 0xd)
+	(singleInit "blocktime" "none" "none" "none" 0x14)
 
 ;	(singleInit "public:doug" "none" "none" "none" 0)
 	(singleInit "public:mine" "none" "none" "none" 0)
@@ -193,9 +194,9 @@
 	;Setting Parameters for consensus type "seq" -> rotating miners
 
 	(llInit "seq:name" "none" "none" "none")
-	(llAddLink "seq:name" (CALLER) "GrandWarlordCasey")
+	;(llAddLink "seq:name" (CALLER) "GrandWarlordCasey")
 	(llInit "seq:stake" "none" "none" "none")
-	(llAddLink "seq:stake" (CALLER) 10)
+	;(llAddLink "seq:stake" (CALLER) 10)
 
 	(return 0 (lll {
 

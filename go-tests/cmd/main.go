@@ -40,7 +40,7 @@ func main(){
     fmt.Println(monkutil.Bytes2Hex(t))
 
     // test linked list
-    l := vars.GetLinkedListHead(addr, "myLL", state)
+    k, l := vars.GetLinkedListHead(addr, "myLL", state)
     fmt.Println(monkutil.Bytes2Hex(l))
     l = vars.GetLinkedListElement(addr, "myLL", "balls", state)
     fmt.Println(monkutil.Bytes2Hex(l))
@@ -53,5 +53,16 @@ func main(){
         fmt.Println(r.Value)
         r = r.Next()
     }
+    k, l = vars.GetNextLinkedListElement(addr, "myLL", "balls", state)
+    fmt.Println(monkutil.Bytes2Hex(k), l)
+    k, l = vars.GetNextLinkedListElement(addr, "myLL", "paws", state)
+    fmt.Println(monkutil.Bytes2Hex(k), l)
+    k, l = vars.GetNextLinkedListElement(addr, "myLL", "monkeyturd", state)
+    fmt.Println(monkutil.Bytes2Hex(k), l)
     
+    for i:=0;i<10;i++{
+        k, l = vars.GetNextLinkedListElement(addr, "myLL", string(k), state)
+        fmt.Println(string(k), l)
+
+    }
 }
