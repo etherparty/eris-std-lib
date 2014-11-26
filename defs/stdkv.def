@@ -46,6 +46,7 @@
 	(def 'kvCTS (name key) (IkvCTS (vari name) key))
 
 	(def 'kvInit (name addperm rmperm modperm) (IkvInit (vari name) name addperm rmperm modperm))
+	(def 'kvInit (name) (IkvInit (vari name) name "none" "none" "none"))
 
 	(def 'kvGet (name key) (IkvGet (kvCTS name key)))
 	(def 'kvLoad (name key mem) (IkvLoad (kvCTS name key) mem))

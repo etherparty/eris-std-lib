@@ -44,6 +44,10 @@
 	(def 'singleValue (name) (IsingleValue (vari name)))
 
 	(def 'singleInit (name addperm rmperm modperm value) (IsingleInit (vari name) name addperm rmperm modperm value))
+	(def 'singleInit (name addperm rmperm modperm) (IsingleInit (vari name) name addperm rmperm modperm 0))
+	(def 'singleInit (name value) (IsingleInit (vari name) name "none" "none" "none" value))
+	(def 'singleInit (name) (IsingleInit (vari name) name "none" "none" "none" 0))
+
 	(def 'singleLoad (name mem) (IsingleLoad (vari name) mem))
 	(def 'singleGet (name) (IsingleGet (vari name)))
 	(def 'singleSet (name value) (IsingleSet (vari name) value))

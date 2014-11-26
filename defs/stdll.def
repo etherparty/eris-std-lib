@@ -71,6 +71,8 @@
 	(def 'llLenSlot (name) (IllLenSlot (vari name)))
 
 	(def 'llInit (name addperm rmperm modperm) (IllInit (vari name) name addperm rmperm modperm))
+	(def 'llInit (name) (IllInit (vari name) name "none" "none" "none"))
+
 	(def 'llAddLink (name key value) (IllAddLink (vari name) (llCTS name key) value))
 	(def 'llRmLink (name key) (IllRmLink (vari name) (llCTS name key)))
 
