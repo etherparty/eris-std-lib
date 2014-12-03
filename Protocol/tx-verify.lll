@@ -1,0 +1,40 @@
+{
+    (def 'txhash () (calldataload 0x0))
+    (def 'nonce () (calldataload 0x20)) 
+    (def 'rec () (calldataload 0x40)) 
+    (def 'val () (calldataload 0x60)) 
+    (def 'g () (calldataload 0x80)) 
+    (def 'gprice () (calldataload 0xa0)) 
+    (def 'sigr () (calldataload 0xc0)) 
+    (def 'sigs () (calldataload 0xe0)) 
+    (def 'sigv () (calldataload 0x100)) 
+   ; (def 'data () (calldataload 0xc0)) 
+
+    (return 0 (lll
+    {
+
+        ; recover address from signature 
+        [0x100](txhash)
+        [0x120](sigr)
+        [0x140](sigs)
+        [0x160](sigv)
+        (CALLSTATELESS 0x500 "ecrecover" 0x0 0x100 0x61 0x140 0x20)
+        (when (= @0x140 0x0){
+             (return 0x0) 
+        })
+        ; check address permission
+        [0x100]"checkperm"
+        (if (= (rec) 0x0) [0x120]"create" [0x120]"transact")
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x100 0x60 0x0 0x20)
+        (when (= @0x0 0x0){
+             (return 0x0) 
+        })
+
+        ; check using less than maxgastx
+
+        ; check sender account nonce (TODO: can this even be done in the vm?)
+
+        (return 0x1) 
+
+    } 0))
+}
