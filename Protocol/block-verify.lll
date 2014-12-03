@@ -1,0 +1,53 @@
+{
+    (def 'bhash () (calldataload 0x0)) 
+    (def 'prevhash () (calldataload 0x20)) 
+    (def 'unclesha () (calldataload 0x40)) 
+    (def 'cb () (calldataload 0x60)) 
+    (def 'stateroot () (calldataload 0x80)) 
+    (def 'txsha () (calldataload 0xa0)) 
+    (def 'diff () (calldataload 0xc0)) 
+    (def 'prevdiff () (calldataload 0xe0)) 
+    (def 'nmbr () (calldataload 0x100)) 
+    (def 'mingasprice () (calldataload 0x120)) 
+    (def 'gaslim () (calldataload 0x140)) 
+    (def 'gasused () (calldataload 0x160)) 
+    (def 'tm () (calldataload 0x180)) 
+    (def 'prevtime () (calldataload 0x1a0)) 
+    (def 'extra () (calldataload 0x1c0)) 
+    (def 'sigr () (calldataload 0x1e0)) 
+    (def 'sigs () (calldataload 0x200)) 
+    (def 'sigv () (calldataload 0x220)) 
+
+    (return 0 (lll
+    {
+        ; check we have permission to mine
+        [0x100]"checkperm"
+        [0x120]"mine"
+        [0x140](cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x100 0x60 0x0 0x20)
+        (when (= @0x0 0x0){
+             (return 0x0) 
+        })
+
+        ; check sigs with ecrecover precompiled contract
+        ; verify return addr is coinbase 
+        [0x100](bhash)
+        [0x120](sigr)
+        [0x140](sigs)
+        [0x160](sigv)
+        (CALLSTATELESS 0x500 0x1 0x0 0x100 0x61 0x80 0x20)
+        (when (!= @0x80 (cb)){
+             (return 0x0) 
+        })
+
+        ; compute difficulty from difficulty contract
+
+        ; check block times
+
+
+        ; verify pow nonce
+
+        (return 0x0 0x20)
+
+    } 0))
+}
