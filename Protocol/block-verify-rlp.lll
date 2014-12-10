@@ -1,38 +1,45 @@
 {
-    (def 'totalsize () (CALLDATASIZE))
-    (def 'll1 () (CALLDATALOAD 0x0))
-    (def 'l1 () (CALLDATALOAD 0x20))
-    (def 'll2 () (CALLDATALOAD (+ 0x40 (l1))))
-    (def 'l2 () (CALLDATALOAD (+ 0x60 (l1))))
+    (def 'memtop_p () 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
+    (def 'ndecode1_p () 0x20) ; pointer to mem storing n decoded elements from block 1
+    (def 'ndeocde2_p () 0x40) ; '' (should be same)
+    (def 'mem1start_p () 0x60) ; pointer to first deocded element for block 1
+    (def 'mem2start_p () 0x80) ; pointer to first decoded element for block 2
 
-    (def 'memtop_p () 0x0)
-    (def 'start () 0x100)
+    (def 'start () 0x100) ; start copying calldata into memory
+
+    (def 'totalsize () (CALLDATASIZE))
+    (def 'l1 () (CALLDATALOAD 0x0)) ; length of first block
+    (def 'l2 () (CALLDATALOAD (+ 0x20 (l1)))) ; length of second block
+    (def 'calldata1start () 0x20) ; where block 1 starts in call data
+    (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
+
+
 
     (return 0 (lll
     {
-        [memtop_p](start)
+        [memtop_p](start) ; begin memtop at start
 
         ; mem offset (write to), calldata offset (read from), size
         ; copy block 1 to mem
-        (CALLDATACOPY (start) 0x40 (l1))
-        [memtop_p](+ @memtop_p (l1))
+        (CALLDATACOPY (start) (calldata1start) (l1))
+        [memtop_p](+ @memtop_p (l1)) ; memtop increments by l1
 
         ; copy block 2 to mem
-        
-         (CALLDATACOPY @memtop_p (+ 0x80 (l1)) (l2))
-        [memtop_p](+ @memtop_p (l2))
+         (CALLDATACOPY @memtop_p (calldata2start) (l2))
+        [memtop_p](+ @memtop_p (l2)) ; memtop increments by l2
 
         
         ; mem offset (read from), size, memoffset (write to)
         ; rlp decode block 1
-        (RLPDECODE (start) (l1) @memtop_p)
-        [memtop_p](+ @memtop_p (* 0xd 0x20))
+        [ndecode1_p](RLPDECODE (start) (l1) @memtop_p)
+        [memtop_p](+ @memtop_p (* @ndecode1_p 0x20)) ; memtop increments by number of elements decode * 32
 
 
         ; rlp decode block 2
-        (RLPDECODE (+ (start) (l1)) (l2) @memtop_p)
+        [ndecode2_p](RLPDECODE (+ (start) (l1)) (l2) @memtop_p)
+        [memtop_p](+ @memtop_p (* @ndecode2_p 0x20)) ; memtop increments by number of elements decode * 32
 
-        ;; TODO: return vales from RLPDECODE ...
+        ;; NOW YOU CAN DO YOUR CONSENSUS
 
         (return 0x1)
 
