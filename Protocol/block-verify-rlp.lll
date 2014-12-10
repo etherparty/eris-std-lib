@@ -1,27 +1,42 @@
 {
-    (def 'memtop_p () 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
-    (def 'ndecode1_p () 0x20) ; pointer to mem storing n decoded elements from block 1
-    (def 'ndeocde2_p () 0x40) ; '' (should be same)
-    (def 'mem1start_p () 0x60) ; pointer to first deocded element for block 1
-    (def 'mem2start_p () 0x80) ; pointer to first decoded element for block 2
+    (def 'memtop_p 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
+    (def 'ndecode1_p 0x20) ; pointer to mem storing n decoded elements from block 1
+    (def 'ndeocde2_p 0x40) ; '' (should be same)
+    (def 'mem1start_p 0x60) ; pointer to first deocded element for block 1
+    (def 'mem2start_p 0x80) ; pointer to first decoded element for block 2
 
-    (def 'start () 0x100) ; start copying calldata into memory
+    (def 'start 0x200) ; start copying calldata into memory
 
     (def 'totalsize () (CALLDATASIZE))
     (def 'l1 () (CALLDATALOAD 0x0)) ; length of first block
     (def 'l2 () (CALLDATALOAD (+ 0x20 (l1)))) ; length of second block
-    (def 'calldata1start () 0x20) ; where block 1 starts in call data
+    (def 'calldata1start 0x20) ; where block 1 starts in call data
     (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
 
-
+    (def 'prevhash 0x0)
+    (def 'unclesha 0x20)
+    (def 'cb 0x40)
+    (def 'stateroot 0x60)
+    (def 'txsha 0x80)
+    (def 'diff 0xa0)
+    (def 'nmbr 0xc0)
+    (def 'mingasprice 0xe0)
+    (def 'gaslim 0x100)
+    (def 'gasused 0x120)
+    (def 'tm 0x140)
+    (def 'extra 0x160)
+    (def 'nonce 0x180)
+    (def 'sigr 0x1a0)
+    (def 'sigs 0x1c0)
+    (def 'sigv 0x1e0)
 
     (return 0 (lll
     {
-        [memtop_p](start) ; begin memtop at start
+        [memtop_p]start ; begin memtop at start
 
         ; mem offset (write to), calldata offset (read from), size
         ; copy block 1 to mem
-        (CALLDATACOPY (start) (calldata1start) (l1))
+        (CALLDATACOPY start calldata1start (l1))
         [memtop_p](+ @memtop_p (l1)) ; memtop increments by l1
 
         ; copy block 2 to mem
@@ -31,16 +46,27 @@
         
         ; mem offset (read from), size, memoffset (write to)
         ; rlp decode block 1
-        [ndecode1_p](RLPDECODE (start) (l1) @memtop_p)
+        [mem1start_p]@memtop_p
+        [ndecode1_p](RLPDECODE start (l1) @mem1start_p)
         [memtop_p](+ @memtop_p (* @ndecode1_p 0x20)) ; memtop increments by number of elements decode * 32
 
 
         ; rlp decode block 2
-        [ndecode2_p](RLPDECODE (+ (start) (l1)) (l2) @memtop_p)
+        [mem2start_p]@memtop_p
+        [ndecode2_p](RLPDECODE (+ start (l1)) (l2) @mem2start_p)
         [memtop_p](+ @memtop_p (* @ndecode2_p 0x20)) ; memtop increments by number of elements decode * 32
 
         ;; NOW YOU CAN DO YOUR CONSENSUS
-
+        ; check we have permission to mine
+        [0x100]"checkperm"
+        [0x120]"mine"
+        [0x140]@(+ @mem1start_p cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
+        
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x100 0x60 0x0 0x20)
+        (when (= @0x0 0x0){
+             (return 0x0) 
+        })
+        
         (return 0x1)
 
     } 0))
