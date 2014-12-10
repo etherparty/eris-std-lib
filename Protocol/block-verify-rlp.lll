@@ -1,0 +1,40 @@
+{
+    (def 'totalsize () (CALLDATASIZE))
+    (def 'll1 () (CALLDATALOAD 0x0))
+    (def 'l1 () (CALLDATALOAD 0x20))
+    (def 'll2 () (CALLDATALOAD (+ 0x40 (l1))))
+    (def 'l2 () (CALLDATALOAD (+ 0x60 (l1))))
+
+    (def 'memtop_p () 0x0)
+    (def 'start () 0x100)
+
+    (return 0 (lll
+    {
+        [memtop_p](start)
+
+        ; mem offset (write to), calldata offset (read from), size
+        ; copy block 1 to mem
+        (CALLDATACOPY (start) 0x40 (l1))
+        [memtop_p](+ @memtop_p (l1))
+
+        ; copy block 2 to mem
+        
+         (CALLDATACOPY @memtop_p (+ 0x80 (l1)) (l2))
+        [memtop_p](+ @memtop_p (l2))
+
+        
+        ; mem offset (read from), size, memoffset (write to)
+        ; rlp decode block 1
+        (RLPDECODE (start) (l1) @memtop_p)
+        [memtop_p](+ @memtop_p (* 0xd 0x20))
+
+
+        ; rlp decode block 2
+        (RLPDECODE (+ (start) (l1)) (l2) @memtop_p)
+
+        ;; TODO: return vales from RLPDECODE ...
+
+        (return 0x1)
+
+    } 0))
+}
