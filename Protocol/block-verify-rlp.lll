@@ -1,4 +1,5 @@
 {
+    ;; pointers
     (def 'memtop_p 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
     (def 'ndecode1_p 0x20) ; pointer to mem storing n decoded elements from block 1
     (def 'ndecode2_p 0x40) ; '' (should be same)
@@ -7,7 +8,6 @@
     (def 'mem2start_p 0xa0) ; pointer to first decoded element for block 2
     (def 'memsigstart_p 0xc0) ; pointer to first decoded element for sig
     
-
     (def 'start 0x1000) ; start copying calldata into memory
 
     (def 'totalsize () (CALLDATASIZE))
@@ -17,6 +17,8 @@
     (def 'calldata1start 0x20) ; where block 1 starts in call data
     (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
     (def 'calldatasigstart () (+ 0x60 (+ (l1) (l2))))
+
+    (def 'resolve (strt key) @(+ strt (+ 0x20 (* 0x2 key))))
 
     (def 'prevhash 0x0)
     (def 'unclesha 0x20)
@@ -37,6 +39,8 @@
 
     (return 0 (lll
     {
+        ;; WE NEED TO COPY ALL THE CALLDATA INTO MEMORY AND THEN RLPDECODE IT
+
         [memtop_p]start ; begin memtop at start
 
         ; mem offset (write to), calldata offset (read from), size
@@ -51,46 +55,52 @@
         ; copy sig to mem
         (CALLDATACOPY @memtop_p (calldatasigstart) (lsig))
         [memtop_p](+ @memtop_p (lsig)) ; memtop increments by lsig
-
         
         ; mem offset (read from), size, memoffset (write to)
         ; rlp decode block 1
         [mem1start_p]@memtop_p
         [ndecode1_p](RLPDECODE start (l1) @mem1start_p)
-        [memtop_p](+ @memtop_p (* @ndecode1_p 0x20)) ; memtop increments by number of elements decode * 32
-
+        [memtop_p](+ @memtop_p (+ (* @ndecode1_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
 
         ; rlp decode block 2
         [mem2start_p]@memtop_p
         [ndecode2_p](RLPDECODE (+ start (l1)) (l2) @mem2start_p)
-        [memtop_p](+ @memtop_p (* @ndecode2_p 0x20)) ; memtop increments by number of elements decode * 32
+        [memtop_p](+ @memtop_p (+ (* @ndecode2_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
 
-        ; rlp decode sig
+        ;; rlp decode sig
         [memsigstart_p]@memtop_p
         [ndecodesig_p](RLPDECODE (+ start (+ (l1) (l2))) (lsig) @memsigstart_p)
-        [memtop_p](+ @memtop_p (* @ndecodesig_p 0x20)) ; memtop increments by number of elements decode * 32
+        [memtop_p](+ @memtop_p (+ (* @ndecodesig_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
 
         ;; NOW YOU CAN DO YOUR CONSENSUS
 
-        ; check we have permission to mine
+         check we have permission to mine
         [0x500]"checkperm"
         [0x520]"mine"
-        [0x540]@(+ @mem1start_p cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
+        [0x540]@(resolve @mem1start_p cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
         ; gas, addr, value, inoffset, insize, retoffset, retsize
         (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x500 0x60 0x600 0x20)
         (when (= @0x600 0x0){
              (return 0x0) 
         })
 
-        ; check block hash
+        ; check block hash and sig
         [0x500](SHA3 start (l1)) ; look ma! verify block hash in VM :)
-        [0x520]@ @memsigstart_p
-        [0x540]@(+ @memsigstart_p 0x20)
-        [0x560]@(+ @memsigstart_p 0x40)
+        [0x520]@ (resolve @memsigstart_p 0x0)
+        [0x540]@ (resolve @memsigstart_p 0x20) 
+        [0x560]@ (resolve @memsigstart_p 0x40)
         (CALLSTATELESS 0x500 "ecrecover" 0x0 0x500 0x61 0x600 0x20)
-        (when (!= @0x600 @(+ @mem1start_p cb)){
+        (when (!= @0x600 @(resolve @mem1start_p cb)){
              (return 0x0) 
         })
+
+         ;compute difficulty from difficulty contract
+
+         ;check block times
+
+         ;verify pow nonce
+
 
         
         (return 0x1)
