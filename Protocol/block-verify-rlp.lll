@@ -60,22 +60,22 @@
         ; rlp decode block 1
         [mem1start_p]@memtop_p
         [ndecode1_p](RLPDECODE start (l1) @mem1start_p)
-        [memtop_p](+ @memtop_p (+ (* @ndecode1_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+        [memtop_p](+ @memtop_p (+ (* @ndecode1_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
 
         ; rlp decode block 2
         [mem2start_p]@memtop_p
         [ndecode2_p](RLPDECODE (+ start (l1)) (l2) @mem2start_p)
-        [memtop_p](+ @memtop_p (+ (* @ndecode2_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+        [memtop_p](+ @memtop_p (+ (* @ndecode2_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
 
         ;; rlp decode sig
         [memsigstart_p]@memtop_p
         [ndecodesig_p](RLPDECODE (+ start (+ (l1) (l2))) (lsig) @memsigstart_p)
-        [memtop_p](+ @memtop_p (+ (* @ndecodesig_p 0x60) 1)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+        [memtop_p](+ @memtop_p (+ (* @ndecodesig_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
 
 
         ;; NOW YOU CAN DO YOUR CONSENSUS
 
-         check we have permission to mine
+        ; check we have permission to mine
         [0x500]"checkperm"
         [0x520]"mine"
         [0x540]@(resolve @mem1start_p cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
@@ -100,8 +100,16 @@
          ;check block times
 
          ;verify pow nonce
-
-
+         ; rlpencode block without nonce
+         [0x600](RLPENCODE (+ @mem1start_p 0x20) (- @ndecode1_p 0x1) @memtop_p)
+         [0x620](SHA3 @memtop_p @0x600) ; hash no nonce
+         [0x640]@(resolve @mem1start_p nonce) ; append nonce
+         [0x660](SHA3 0x620 0x40) ; hash the hashnononce+nonce
+         [0x680](* 0x2 (/ (EXP 2 255) (resolve @mem1start_p diff))) ;target
+         (LOGMEM)
+         (when (< @0x680 @0x660) {
+            (return 0x0)
+         })
         
         (return 0x1)
 
