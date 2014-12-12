@@ -18,8 +18,10 @@
     (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
     (def 'calldatasigstart () (+ 0x60 (+ (l1) (l2))))
 
+    ; resolve an element of rlp decoded structure
     (def 'resolve (strt key) @(+ strt (+ 0x20 (* 0x2 key))))
 
+    ; our block structure
     (def 'prevhash 0x0)
     (def 'unclesha 0x20)
     (def 'cb 0x40)
@@ -33,9 +35,6 @@
     (def 'tm 0x140)
     (def 'extra 0x160)
     (def 'nonce 0x180)
-    (def 'sigr 0x1a0)
-    (def 'sigs 0x1c0)
-    (def 'sigv 0x1e0)
 
     (return 0 (lll
     {
@@ -96,17 +95,33 @@
         })
 
          ;compute difficulty from difficulty contract
-
+         [0x500] (* 5 60) ; target block time
+         [0x520]@ (resolve @mem2start_p diff) ; parent diff 
+         [0x540]@ (resolve @mem2start_p tm) ; parent time
+         [0x560]@ (resolve @mem1start_p tm) ; block time
+         [0x580] (/ @0x520 (EXP 0x2 0x8)) ; right shifted adjustment
+         (if (>= @0x560 (+ @0x540 @0x500)) 
+            { [0x5a0] (- @0x520 @0x580) }
+            { [0x5a0] (+ @0x520 @0x580) }
+         ) 
+         (when (!= @0x5a0 @ (resolve @mem1start_p diff)){
+            (return 0x0)
+         })
+            
          ;check block times
+         [0x500]@ (resolve @mem1start_p tm)
+         [0x520]@ (resolve @mem2start_p tm)
+         (when (< @0x500 0x520){
+            ;; should also check that block is within x minutes of last block
+            (return 0x0)
+         })
 
-         ;verify pow nonce
-         ; rlpencode block without nonce
+         ;verify pow nonce (rlpencode block without nonce, hash, append nonce, hash, result must be less than target)
          [0x600](RLPENCODE (+ @mem1start_p 0x20) (- @ndecode1_p 0x1) @memtop_p)
          [0x620](SHA3 @memtop_p @0x600) ; hash no nonce
          [0x640]@(resolve @mem1start_p nonce) ; append nonce
          [0x660](SHA3 0x620 0x40) ; hash the hashnononce+nonce
          [0x680](* 0x2 (/ (EXP 2 255) (resolve @mem1start_p diff))) ;target
-         (LOGMEM)
          (when (< @0x680 @0x660) {
             (return 0x0)
          })
