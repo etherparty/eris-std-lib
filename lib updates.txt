@@ -1,0 +1,4 @@
+single init optional value
+membool optional on all types with Store
+add optional init to kv and ll
+Address non-powers-of-2 in array
