@@ -249,10 +249,10 @@
 	;DOUG Variables
 	;=========================================================================================
 
-		(when (= (cmd) "getvartype")
+		(when (= (cmd) "getvartype"){
 			[0x0](vtype (name))
 			(return 0x0 0x20)
-		)
+		})
 
 		(when (= (cmd) "getvar")
 			{
