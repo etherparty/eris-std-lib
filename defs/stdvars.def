@@ -1,0 +1,83 @@
+{
+	(include "./stdvarspace.def")
+	(include "./single.def")
+	(include "./stdarray.def")
+	(include "./stdll.def")
+	(include "./stdkv.def")
+	(include "./double.def")
+
+	;Single
+	(def 'varSet (name type ap mp rp value)
+		{
+			(if (varExist name)
+				{
+					;Don't Init
+				}
+				{
+					;Init
+
+				}
+			)
+			
+		}
+	)
+}
+
+(when (= (cmd) "setvar")
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(when (= (type) "single")
+					{
+						(if (= (vtype (name)) 0)
+							(singleInit (name) "none" "none" "none" (svalue))
+							(singleSet (name) (svalue))
+						)
+					}
+				)
+
+				(when (= (type) "double")
+					{
+						(if (= (vtype (name)) 0)
+							(doubleInit (name) "none" "none" "none" (dvalue) (dvalue2))
+							(doubleSet (name) (dvalue) (dvalue2))
+						)
+					}
+				)
+
+				(when (= (type) "linkedlist")
+					{
+						(if (= (vtype (name)) 0)
+							{
+								(llInit (name) "none" "none" "none")
+								(llAddLink (name) (lkey) (lvalue))
+							}
+							(if ())
+							(llSet (name) (lkey) (lvalue))
+						)
+					}
+				)
+
+				(when (= (type) "keyvalue")
+					{
+						(if (= (vtype (name)) 0)
+							{
+								(kvInit (name) "none" "none" "none")
+								(kvSet (name) (lkey) (lvalue))
+							}
+							(kvSet (name) (lkey) (lvalue))
+						)
+					}
+				)
+
+				(when (= (type) "array")
+					{
+						(if (= (vtype (name)) 0)
+							(STOP)
+							(llSet (name) (akey) (avalue))
+						)
+					}
+				)
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
