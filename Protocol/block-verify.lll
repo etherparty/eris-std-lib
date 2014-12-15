@@ -1,53 +1,131 @@
 {
-    (def 'bhash () (calldataload 0x0)) 
-    (def 'prevhash () (calldataload 0x20)) 
-    (def 'unclesha () (calldataload 0x40)) 
-    (def 'cb () (calldataload 0x60)) 
-    (def 'stateroot () (calldataload 0x80)) 
-    (def 'txsha () (calldataload 0xa0)) 
-    (def 'diff () (calldataload 0xc0)) 
-    (def 'prevdiff () (calldataload 0xe0)) 
-    (def 'nmbr () (calldataload 0x100)) 
-    (def 'mingasprice () (calldataload 0x120)) 
-    (def 'gaslim () (calldataload 0x140)) 
-    (def 'gasused () (calldataload 0x160)) 
-    (def 'tm () (calldataload 0x180)) 
-    (def 'prevtime () (calldataload 0x1a0)) 
-    (def 'extra () (calldataload 0x1c0)) 
-    (def 'sigr () (calldataload 0x1e0)) 
-    (def 'sigs () (calldataload 0x200)) 
-    (def 'sigv () (calldataload 0x220)) 
+    ;; pointers
+    (def 'memtop_p 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
+    (def 'ndecode1_p 0x20) ; pointer to mem storing n decoded elements from block 1
+    (def 'ndecode2_p 0x40) ; '' (should be same)
+    (def 'ndecodesig_p 0x60) ; pointer to mem storing n decoded elements from sig
+    (def 'mem1start_p 0x80) ; pointer to first deocded element for block 1
+    (def 'mem2start_p 0xa0) ; pointer to first decoded element for block 2
+    (def 'memsigstart_p 0xc0) ; pointer to first decoded element for sig
+    
+    (def 'start 0x1000) ; start copying calldata into memory
+
+    (def 'totalsize () (CALLDATASIZE))
+    (def 'l1 () (CALLDATALOAD 0x0)) ; length of first block
+    (def 'l2 () (CALLDATALOAD (+ 0x20 (l1)))) ; length of second block
+    (def 'lsig () (CALLDATALOAD (+ 0x40 (+ (l1) (l2)))))
+    (def 'calldata1start 0x20) ; where block 1 starts in call data
+    (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
+    (def 'calldatasigstart () (+ 0x60 (+ (l1) (l2)))) ; where sig starts in calldata
+
+    ; resolve an element of rlp decoded structure
+    (def 'resolve (strt key) @(+ strt (+ 0x20 (* 0x2 key))))
+
+    ; our block structure
+    (def 'prevhash 0x0)
+    (def 'unclesha 0x20)
+    (def 'cb 0x40)
+    (def 'stateroot 0x60)
+    (def 'txsha 0x80)
+    (def 'diff 0xa0)
+    (def 'nmbr 0xc0)
+    (def 'mingasprice 0xe0)
+    (def 'gaslim 0x100)
+    (def 'gasused 0x120)
+    (def 'tm 0x140)
+    (def 'extra 0x160)
+    (def 'nonce 0x180)
 
     (return 0 (lll
     {
+        ;; WE NEED TO COPY ALL THE CALLDATA INTO MEMORY AND THEN RLPDECODE IT
+
+        [memtop_p]start ; begin memtop at start
+
+        ; mem offset (write to), calldata offset (read from), size
+        ; copy block 1 to mem
+        (CALLDATACOPY start calldata1start (l1))
+        [memtop_p](+ @memtop_p (l1)) ; memtop increments by l1
+
+        ; copy block 2 to mem
+        (CALLDATACOPY @memtop_p (calldata2start) (l2))
+        [memtop_p](+ @memtop_p (l2)) ; memtop increments by l2
+
+        ; copy sig to mem
+        (CALLDATACOPY @memtop_p (calldatasigstart) (lsig))
+        [memtop_p](+ @memtop_p (lsig)) ; memtop increments by lsig
+        
+        ; mem offset (read from), size, memoffset (write to)
+        ; rlp decode block 1
+        [mem1start_p]@memtop_p
+        [ndecode1_p](RLPDECODE start (l1) @mem1start_p)
+        [memtop_p](+ @memtop_p (+ (* @ndecode1_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+        ; rlp decode block 2
+        [mem2start_p]@memtop_p
+        [ndecode2_p](RLPDECODE (+ start (l1)) (l2) @mem2start_p)
+        [memtop_p](+ @memtop_p (+ (* @ndecode2_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+        ;; rlp decode sig
+        [memsigstart_p]@memtop_p
+        [ndecodesig_p](RLPDECODE (+ start (+ (l1) (l2))) (lsig) @memsigstart_p)
+        [memtop_p](+ @memtop_p (+ (* @ndecodesig_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+
+        ;; NOW YOU CAN DO YOUR CONSENSUS
+
         ; check we have permission to mine
-        [0x100]"checkperm"
-        [0x120]"mine"
-        [0x140](cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
-        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x100 0x60 0x0 0x20)
-        (when (= @0x0 0x0){
+        [0x500]"checkperm"
+        [0x520]"mine"
+        [0x540]@(resolve @mem1start_p cb) ;0xbbbd0256041f7aed3ce278c56ee61492de96d001
+        ; gas, addr, value, inoffset, insize, retoffset, retsize
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x500 0x60 0x600 0x20)
+        (when (= @0x600 0x0){
              (return 0x0) 
         })
 
-        ; check sigs with ecrecover precompiled contract
-        ; verify return addr is coinbase 
-        [0x100](bhash)
-        [0x120](sigr)
-        [0x140](sigs)
-        [0x160](sigv)
-        (CALLSTATELESS 0x500 "ecrecover" 0x0 0x100 0x61 0x80 0x20)
-        (when (!= @0x80 (cb)){
+        ; check block hash and sig
+        [0x500](SHA3 start (l1)) ; look ma! verify block hash in VM :)
+        [0x520]@ (resolve @memsigstart_p 0x0)
+        [0x540]@ (resolve @memsigstart_p 0x20) 
+        [0x560]@ (resolve @memsigstart_p 0x40)
+        (CALLSTATELESS 0x500 "ecrecover" 0x0 0x500 0x61 0x600 0x20)
+        (when (!= @0x600 @(resolve @mem1start_p cb)){
              (return 0x0) 
         })
 
-        ; compute difficulty from difficulty contract
+        ; check difficulty with call to difficulty contract
+        [0x500] "getvar"
+        [0x520] "compute-difficulty"
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x500 0x40 0x600 0x20)
+        ;; this is unfortunately silly... (TODO!)
+        (CALLDATACOPY @memtop_p 0x0 (CALLDATASIZE))
+        (CALLSTATELESS 0x1000000 @0x600 0x0 @memtop_p (CALLDATASIZE)  0x620 0x20)
+        (when (!= @0x620 @ (resolve @mem1start_p diff)){
+           (return 0x0)
+        })
+           
 
-        ; check block times
+        ;check block times
+        [0x500]@ (resolve @mem1start_p tm)
+        [0x520]@ (resolve @mem2start_p tm)
+        (when (< @0x500 0x520){
+           ;; should also check that block is within x minutes of last block
+           (return 0x0)
+        })
 
-
-        ; verify pow nonce
-
-        (return 0x0 0x20)
+        ;verify pow nonce (rlpencode block without nonce, hash, append nonce, hash, result must be less than target)
+        [0x600](RLPENCODE (+ @mem1start_p 0x20) (- @ndecode1_p 0x1) @memtop_p)
+        [0x620](SHA3 @memtop_p @0x600) ; hash no nonce
+        [0x640]@(resolve @mem1start_p nonce) ; append nonce
+        [0x660](SHA3 0x620 0x40) ; hash the hashnononce+nonce
+        [0x680](* 0x2 (/ (EXP 2 255) (resolve @mem1start_p diff))) ;target
+        (when (< @0x680 @0x660) {
+           (return 0x0)
+        })
+        
+       ;; CONGRATULATIONS: IF YOU'VE MADE IT THIS FAR, THE BLOCK IS VALID!
+       (return 0x1)
 
     } 0))
 }

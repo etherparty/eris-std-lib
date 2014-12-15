@@ -1,40 +1,85 @@
 {
-    (def 'txhash () (calldataload 0x0))
-    (def 'nonce () (calldataload 0x20)) 
-    (def 'rec () (calldataload 0x40)) 
-    (def 'val () (calldataload 0x60)) 
-    (def 'g () (calldataload 0x80)) 
-    (def 'gprice () (calldataload 0xa0)) 
-    (def 'sigr () (calldataload 0xc0)) 
-    (def 'sigs () (calldataload 0xe0)) 
-    (def 'sigv () (calldataload 0x100)) 
-   ; (def 'data () (calldataload 0xc0)) 
+    ;; pointers
+    (def 'memtop_p 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
+    (def 'ndecode_p 0x20) ; pointer to mem storing n decoded elements 
+    (def 'memstart_p 0x40) ; pointer to first deocded element
+    
+    (def 'start 0x1000) ; start copying calldata into memory
+
+    (def 'totalsize () (CALLDATASIZE))
+    (def 'l () (CALLDATALOAD 0x0)) ; length of first block
+    (def 'calldatastart 0x20) ; where tx starts in call data
+
+    ; resolve an element of rlp decoded structure
+    (def 'resolve (strt key) @(+ strt (+ 0x20 (* 0x2 key))))
+
+    ; our tx structure
+    (def 'nonc 0x0)
+    (def 'gprice 0x20)
+    (def 'g 0x40)
+    (def 'rec 0x60)
+    (def 'val 0x80)
+    (def 'dat 0xa0)
+    (def 'sigv 0xc0)
+    (def 'sigr  0xe0)
+    (def 'sigs 0x100)
 
     (return 0 (lll
     {
+        ;; WE NEED TO COPY ALL THE CALLDATA INTO MEMORY AND THEN RLPDECODE IT
 
-        ; recover address from signature 
-        [0x100](txhash)
-        [0x120](sigr)
-        [0x140](sigs)
-        [0x160](sigv)
-        (CALLSTATELESS 0x500 "ecrecover" 0x0 0x100 0x61 0x140 0x20)
-        (when (= @0x140 0x0){
+        [memtop_p]start ; begin memtop at start
+
+        ; mem offset (write to), calldata offset (read from), size
+        ; copy block 1 to mem
+        (CALLDATACOPY start calldatastart (l))
+        [memtop_p](+ @memtop_p (l)) ; memtop increments by l
+
+        ; mem offset (read from), size, memoffset (write to)
+        ; rlp decode block 1
+        [memstart_p]@memtop_p
+        [ndecode_p](RLPDECODE start (l) @memstart_p)
+
+        [memtop_p](+ @memtop_p (+ (* @ndecode_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+        ;; NOW YOU CAN DO YOUR CONSENSUS
+
+        ; compute tx hash
+        [0x600](RLPENCODE (+ @memstart_p 0x20) 0x6 @memtop_p)
+        [0x620](SHA3 @memtop_p @0x600)
+        [0x640]@ (resolve @memstart_p sigr)
+        [0x660]@ (resolve @memstart_p sigs)
+        [0x680](* (- @ (resolve @memstart_p sigv) 27) (EXP 2 248))
+        (CALLSTATELESS 0x500 "ecrecover" 0x0 0x620 0x61 0x740 0x20)
+        (when (= @0x740 0x0){
              (return 0x0) 
         })
+
         ; check address permission
-        [0x100]"checkperm"
-        (if (= (rec) 0x0) [0x120]"create" [0x120]"transact")
-        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x100 0x60 0x0 0x20)
+        [0x700]"checkperm"
+        (if (= (rec) 0x0) [0x720]"create" [0x720]"transact")
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x700 0x60 0x0 0x20)
         (when (= @0x0 0x0){
              (return 0x0) 
         })
 
         ; check using less than maxgastx
+        [0x500]"getvar"
+        [0x520]"maxgastx"
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x500 0x40 0x600 0x20)
+        [0x540]@ (resolve @memstart_p g)
+        (when (> @0x540 @0x600){
+            (return 0x0)
+        })
 
-        ; check sender account nonce (TODO: can this even be done in the vm?)
+        ; check sender account nonce 
+        (when (!= (NONCE @0x740) @ (resolve @memstart_p nonc)){
+            (return 0x0)
+        })
 
-        (return 0x1) 
+
+       ;; CONGRATULATIONS: IF YOU'VE MADE IT THIS FAR, THE TX IS VALID!
+       (return 0x1)
 
     } 0))
 }
