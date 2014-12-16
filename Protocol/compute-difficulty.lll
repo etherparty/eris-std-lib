@@ -1,0 +1,79 @@
+{
+    ;; pointers
+    (def 'memtop_p 0x0) ; top of the memory array (MSIZE increments in 32 bytes, we don't want that)
+    (def 'ndecode1_p 0x20) ; pointer to mem storing n decoded elements from block 1
+    (def 'ndecode2_p 0x40) ; '' (should be same)
+    (def 'mem1start_p 0x80) ; pointer to first deocded element for block 1
+    (def 'mem2start_p 0xa0) ; pointer to first decoded element for block 2
+    
+    (def 'start 0x1000) ; start copying calldata into memory
+
+    (def 'l1 () (CALLDATALOAD 0x0)) ; length of first block
+    (def 'l2 () (CALLDATALOAD (+ 0x20 (l1)))) ; length of second block
+    (def 'calldata1start 0x20) ; where block 1 starts in call data
+    (def 'calldata2start () (+ 0x40 (l1))) ; where block 2 starts in call data
+
+    ; resolve an element of rlp decoded structure
+    (def 'resolve (strt key) @(+ strt (+ 0x20 (* 0x2 key))))
+
+    ; our block structure
+    (def 'prevhash 0x0)
+    (def 'unclesha 0x20)
+    (def 'cb 0x40)
+    (def 'stateroot 0x60)
+    (def 'txsha 0x80)
+    (def 'diff 0xa0)
+    (def 'nmbr 0xc0)
+    (def 'mingasprice 0xe0)
+    (def 'gaslim 0x100)
+    (def 'gasused 0x120)
+    (def 'tm 0x140)
+    (def 'extra 0x160)
+    (def 'nonce 0x180)
+
+    (return 0 (lll
+    {
+        ;; WE NEED TO COPY ALL THE CALLDATA INTO MEMORY AND THEN RLPDECODE IT
+
+        [memtop_p]start ; begin memtop at start
+
+        ; mem offset (write to), calldata offset (read from), size
+        ; copy block 1 to mem
+        (CALLDATACOPY start calldata1start (l1))
+        [memtop_p](+ @memtop_p (l1)) ; memtop increments by l1
+
+        ; copy block 2 to mem
+        (CALLDATACOPY @memtop_p (calldata2start) (l2))
+        [memtop_p](+ @memtop_p (l2)) ; memtop increments by l2
+
+        ; mem offset (read from), size, memoffset (write to)
+        ; rlp decode block 1
+        [mem1start_p]@memtop_p
+        [ndecode1_p](RLPDECODE start (l1) @mem1start_p)
+        [memtop_p](+ @memtop_p (+ (* @ndecode1_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+        ; rlp decode block 2
+        [mem2start_p]@memtop_p
+        [ndecode2_p](RLPDECODE (+ start (l1)) (l2) @mem2start_p)
+        [memtop_p](+ @memtop_p (+ (* @ndecode2_p 0x60) 0x20)) ; memtop increments by number of elements decoded * 32 * 3 + 1
+
+
+        ;; NOW YOU CAN COMPUTE DIFFICULTY 
+
+        ;compute difficulty 
+        [0x400] "getvar"
+        [0x420] "blocktime"
+        (CALLSTATELESS 0x1000 (GENDOUG) 0x0 0x400 0x40 0x500 0x20)
+        [0x520]@ (resolve @mem2start_p diff) ; parent diff 
+        [0x540]@ (resolve @mem2start_p tm) ; parent time
+        [0x560]@ (resolve @mem1start_p tm) ; block time
+        [0x580] (/ @0x520 (EXP 0x2 0x8)) ; right shifted adjustment
+        (if (>= @0x560 (+ @0x540 @0x500)) 
+           { [0x5a0] (- @0x520 @0x580) }
+           { [0x5a0] (+ @0x520 @0x580) }
+        ) 
+
+        (return @0x5a0)
+
+    } 0))
+}
