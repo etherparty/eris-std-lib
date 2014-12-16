@@ -137,18 +137,17 @@
 
 
 {
-	(include "../defs/stdvarspace.def")
-	(include "../defs/single.def")
-	(include "../defs/stdarray.def")
-	(include "../defs/stdll.def")
-	(include "../defs/c3d.def")
+	(include "../DTT/stdvarspace.def")
+	(include "../DTT/single.def")
+	(include "../DTT/stdarray.def")
+	(include "../DTT/stdll.def")
+	(include "../DTT/stdkv.def")
+	(include "../DTT/double.def")
 
+	;Helpful Functions
+	(def 'BLcheck (addr) (= (arrayGetE "perms" addr 0) 1))
 	(def 'NEG (value) (- 0 value))
 	(def 'gass () (- (GAS) 100))
-
-	(def 'DOUGDATAMODEL 0x0) ;Fill these in if you want
-	(def 'DOUGUIPOINTER 0x0)
-	(def 'DOUGBLOB 0x0)
 
 	;General structure
 
@@ -159,25 +158,21 @@
 	(arrayInit "perms" "none" "none" "none" 4) 
 	(arraySetE "perms" (CALLER) 0 1) ;Gives Caller DOUG
 
-;	(def 'BLcheck (addr) (|| (= (singleGet "public:doug") 1)(= (arrayGetE "perms" addr 0) 1)))
+	(llInit "DOUG" "none" "none" "none")
+	(llAddLink "DOUG" "doug" (ADDRESS))
+
 	(def 'BLcheck (addr) (= (arrayGetE "perms" addr 0) 1))
 
 	;(Register)
 	(def 'cmd () (calldataload 0x0))
 	(def 'name () (calldataload 0x20))
 	(def 'target () (calldataload 0x40))
-	(def 'type () (calldataload 0x60))
-	(def 'behaviour () (calldataload 0x80))
-	(def 'data () (calldataload 0xA0))
-	(def 'model () (calldataload 0xC0))
-	(def 'UI () (calldataload 0xE0))
 
 	;DOUG Variable space
 	(def 'value () (calldataload 0x40))
 
 	(def 'key () (calldataload 0x40))
 	(def 'enum () (calldataload 0x60))
-
 
 	(def 'type () (calldataload 0x40))
 
@@ -198,18 +193,7 @@
 	;Permission
 	(def 'permnum () (calldataload 0x60))
 
-	;INITIALIZATION
-	[0x300]0x88554646BA
-	[0x320] DOUGDATAMODEL
-	[0x340] DOUGUIPOINTER
-	[0x360] DOUGBLOB
-	[0x380] 0x0 ;DOUG IS SUPREME
-	[0x3A0]"The People"
-	[0x3C0]"Dennis Mckinnon" ; These feilds have no purpose in DOUG
-	[0x3E0]1
-	(C3DInit 0x300 0 1 0 0 0 0 0)
-
-	(llInit "DOUG" "none" "none" "none" "DOUG" (Address))
+	
 
 	[[0x38155ef3698a43b24b054d816a8a5f79fc148623]] 0x1111 ;NEED TO REMOVE THIS
 
@@ -230,17 +214,6 @@
 				(unless (BLcheck (ORIGIN)) (STOP))
 
 				(llAddLink "DOUG" (name) (target))
-
-				;C3D Data Attached
-				[0x300](name)
-				[0x320](type)
-				[0x340](behaviour)
-				[0x360](data)
-				[0x380](model)
-				[0x3A0](UI)
-
-				(C3DAddLink (target) 0x300 0 1)
-
 				[0x0]1
 				(return 0x0 0x20)
 			}
@@ -249,10 +222,12 @@
 	;DOUG Variables
 	;=========================================================================================
 
-		(when (= (cmd) "getvartype"){
-			[0x0](vtype (name))
-			(return 0x0 0x20)
-		})
+		(when (= (cmd) "getvartype")
+			{
+				[0x0](vtype (name))
+				(return 0x0 0x20)
+			}
+		)
 
 		(when (= (cmd) "getvar")
 			{
@@ -319,8 +294,9 @@
 						(if (= (vtype (name)) 0)
 							{
 								(llInit (name) "none" "none" "none")
-								(llSet (name) (lkey) (lvalue))
+								(llAddLink (name) (lkey) (lvalue))
 							}
+							(if ())
 							(llSet (name) (lkey) (lvalue))
 						)
 					}

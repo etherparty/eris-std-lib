@@ -1,0 +1,199 @@
+;After Writing this I think its kind of bullshit. But I will await Ethan's judgement on it. In the mean time Ill move the changes to gendoug-v3 where we actually want them.
+
+{
+	(include "./stdvarspace.def")
+	(include "./single.def")
+	(include "./stdarray.def")
+	(include "./stdll.def")
+	(include "./stdkv.def")
+	(include "./double.def")
+
+	;SETS
+
+	;Only Singles
+	(def 'varSet (name type value)
+		{
+			0
+			(if (varExist name)
+				{
+					(when (&& (= type "single") (= (vtype name) type))
+						{
+							(singleSet name value)
+							1
+						}
+					)
+				}
+				{
+					(when (= type "single")
+						{
+							(singleInit name value)
+							1
+						}
+					)
+				}
+			)
+		}
+	)
+
+	;doubles, key-values, linked lists
+	;value1 = key for those with kv and ll value1= index for array (keyless)
+	(def 'varSet (name type value1 value2)
+		{
+			0
+			(if (varExist name)
+				{
+					(when (&& (= type "double") (= (vtype name) type))
+						{
+							(doubleSet name value1 value2)
+							1
+						}
+					)
+					(when (&& (= type "keyvalue") (= (vtype name) type))
+						{
+							(kvSet name value1 value2)
+							1
+						}
+					)
+					(when (&& (= type "linkedlist") (= (vtype name) type))
+						{
+							(llSet name value1 value2)
+							1
+						}
+					)
+					(when (&& (= type "array") (= (vtype name) type))
+						{
+							(arraySet name value1 value2)
+							1
+						}
+					)
+				}
+				{
+					(when (= type "double")
+						{
+							(doubleInit name value1 value1)
+							1
+						}
+					)
+					(when (= type "keyvalue")
+						{
+							(kvInit name)
+							(kvSet name value1 value2)
+							1
+						}
+					)
+					(when (= type "linkedlist")
+						{
+							(llInit name)
+							(llAddLink name value1 value2)
+							1
+						}
+					)
+					(when (= type "array")
+						{
+							(arrayInit name 0x100) ;If you are using this to set your arrays you get slots of 32 bytes. Sucks to be you
+							(arraySet name value1 value2)
+							1
+						}
+					)
+				}
+			)
+		}
+	)
+
+	;keyed arrays
+	(def 'varSet (name type key index value)
+		{
+			0
+			(if (varExist name)
+				{
+					(when (&& (= type "array") (= (vtype name) type))
+						{
+							(arraySet name key index value)
+							1
+						}
+					)
+				}
+				{
+					(when (= type "array")
+						{
+							(arrayInit name 0x100) ;If you are using this to set your arrays you get slots of 32 bytes. Sucks to be you
+							(arraySet name key index value)
+							1
+						}
+					)
+				}
+			)
+		}
+	)
+
+
+	;GETS
+	(def 'varsGet (name mem)
+		{
+			0
+			(when (varExist name)
+				{
+					(when (= (vtype name) "single")
+						{
+							(singleLoad name mem)
+							"single"
+						}
+					)
+
+					(when (= (vtype name) "double")
+						{
+							(doubleload (name) mem)
+							"double"
+						}
+					)
+				}
+			)
+		}
+	)
+
+	(def 'varsGet (name key mem)
+		{
+			0
+			(when (varExist name)
+				{
+					(when (= (vtype name) "linkedlist")
+						{
+							(llLoad name key mem)
+							"linkedlist"
+						}
+					)
+
+					(when (= (vtype name) "keyvalue")
+						{
+							(kvLoad name key mem)
+							"keyvalue"
+						}
+					)
+
+					(when (= (vtype name) "array") ;For array key is actually index
+						{
+							(arrayLoadE name key mem)
+							"array"
+						}
+					)
+				}
+			)
+		}
+	)
+
+	(def 'varsGet (name key index mem)
+		{
+			0
+			(when (varExist name)
+				{
+					(when (= (vtype name) "array")
+						{
+							(arrayLoadE name key index mem)
+							"array"
+						}
+					)
+				}
+			)
+		}
+	)
+}

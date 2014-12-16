@@ -110,10 +110,10 @@
 ;------------------------------------------------------------------------------------------------
 
 {
-	(include "../defs/single.def")
-	(include "../defs/stdarray.def")
-	(include "../defs/stdll.def")
-	(include "../defs/c3d.def")
+	(include "../DTT/single.def")
+	(include "../DTT/stdarray.def")
+	(include "../DTT/stdll.def")
+	(include "../DTT/c3d.def")
 
 	(def 'NEG (value) (- 0 value))
 	(def 'gass () (- (GAS) 100))
