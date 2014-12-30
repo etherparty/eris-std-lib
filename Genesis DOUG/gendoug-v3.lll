@@ -155,8 +155,15 @@
 	(llInit "permnames" "none" "none" "none")
 	(llAddLink "permnames" "doug" 0)
 
+	;locals
 	(arrayInit "perms" "none" "none" "none" 4) 
 	(arraySetE "perms" (CALLER) 0 1) ;Gives Caller DOUG
+
+	;globals values
+	(arrayInit "global" "none" "none" "none" 4)
+
+	;global exclusions
+	(kvInit "exclude" "none" "none" "none")
 
 	(llInit "DOUG" "none" "none" "none")
 	(llAddLink "DOUG" "doug" (ADDRESS))
@@ -192,6 +199,10 @@
 
 	;Permission
 	(def 'permnum () (calldataload 0x60))
+
+	(def 'globalval () (calldataload 0x40))
+
+	(def 'excludenum () (calldataload 0x60))
 
 	
 
@@ -366,14 +377,44 @@
 		(when (= (cmd) "checkperm")
 			{
 				[0x0](arrayGetE "perms" (target) (llGet "permnames" (name)))
-				(return 0x0 0x20) ;Return requested value
+				(if (= @0x0 0) 
+					{
+						[0x20](arrayGetE "exclude" (target) (llGet "permnames" (name)))
+						[0x40](kvGet "global" (llGet "permnames" (name)))
+						(if (= @0x20 0)
+							(return 0x40 0x20)
+							(return 0x0 0x20)
+						)
+					}
+					{
+						(return 0x0 0x20);Return requested value
+					}
+				)
 			}
 		)
 
-		(when (= (cmd) "setperm")
+		(when (= (cmd) "setperm") ;"local"
 			{
 				(unless (BLcheck (ORIGIN)) (STOP))
 				(arraySetE "perms" (target) (llGet "permnames" (name)) (permnum))
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "setglobal") ;"global"
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(kvSet "global" (name) (globalval))
+				[0x0]1
+				(return 0x0 0x20)
+			}
+		)
+
+		(when (= (cmd) "setexclude") ;"set to the exclude list"
+			{
+				(unless (BLcheck (ORIGIN)) (STOP))
+				(arraySetE "exclude" (target) (llGet "permnames" (name)) (excludenum))
 				[0x0]1
 				(return 0x0 0x20)
 			}
