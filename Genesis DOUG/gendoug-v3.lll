@@ -160,10 +160,10 @@
 	(arraySetE "perms" (CALLER) 0 1) ;Gives Caller DOUG
 
 	;globals values
-	(arrayInit "global" "none" "none" "none" 4)
+	(kvInit "global" "none" "none" "none")
 
 	;global exclusions
-	(kvInit "exclude" "none" "none" "none")
+	(arrayInit "exclude" "none" "none" "none" 2)
 
 	(llInit "DOUG" "none" "none" "none")
 	(llAddLink "DOUG" "doug" (ADDRESS))
